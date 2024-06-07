@@ -9,13 +9,15 @@ class Chainable:
         """
         Assert something inside the Chainable
         """
-        return Chainable()
+        print(args)
+        return Chainable('should')
 
     def its(self, *args) -> Self:
         """
         Selector of what is inside the Chainable object
         """
-        return Chainable()
+        print(args)
+        return Chainable('its')
 
 
 def get(*args) -> Chainable:
@@ -24,6 +26,7 @@ def get(*args) -> Chainable:
     # get something
 
     something = "some data to assert"
+    print(args)
     return Chainable(something)
 
 
@@ -32,4 +35,5 @@ def it(test_name):
     Declare a Spec and log it in the console
     Also should create a new Queue of chainables
     """
+    print(test_name)
     pass

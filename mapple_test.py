@@ -17,3 +17,5 @@ def spec_c():
     mp.it("checks collision between pipes")
     mp.get('FamilyType', 'Rohr-PVC').its('Radius').should('be.equal', 20.0)
     mp.get('Family')
+
+spec_a()
