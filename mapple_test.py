@@ -4,7 +4,8 @@ import mapple as mp
 def spec_a():
     mp.it("Windows should be at least 1.70 m")
 
-    mp.get('category', 'Window').its('Height').should('be.greater', 1.70)
+    mp.get('category', 'Windows').where('speckle_type',
+                                        'Objects.Other.Instance:Objects.Other.Revit.RevitInstance').its('Height').should('be.greater', 1.70)
 
 
 def spec_b():
@@ -17,5 +18,6 @@ def spec_c():
     mp.it("checks collision between pipes")
     mp.get('FamilyType', 'Rohr-PVC').its('Radius').should('be.equal', 20.0)
     mp.get('Family')
+
 
 spec_a()
