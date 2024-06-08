@@ -30,7 +30,6 @@ class Chainable:
         """
         print("Filtering by:", *args)
 
-        print(self.content)
         selected = list(filter(lambda obj: property_equal(
             args[0], args[1], obj), self.content))
         print("Got", len(selected), args[1])
@@ -79,6 +78,6 @@ def it(test_name):
 
 def property_equal(propName, value, obj):
     try:
-        return obj[propName] == value
+        return getattr(obj, propName) == value
     except Exception:
         return False
