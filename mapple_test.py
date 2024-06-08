@@ -4,16 +4,19 @@ import mapple as mp
 def spec_a():
     mp.it("Windows should be at least 1.70 m")
 
-    windows = mp.get('category', 'Windows')\
+    mp.get('category', 'Windows')\
         .where('speckle_type','Objects.Other.Instance:Objects.Other.Revit.RevitInstance')\
         .its('Height')\
-        .should('be.greater', 1.70) # assert
+        .should('be.greater', 2800) # assert
 
 
 def spec_b():
     mp.it("validate geometry by id")
 
-    mp.get('id', 'adf38u9asf8').should('not.touch', '19283908f')
+    mp.get('family', 'Basic Wall')\
+        .where('type', 'SIP 202mm Wall - conc clad')\
+        .its('Area')\
+        .should('be.greater', 0)
 
 
 def spec_c():
@@ -22,4 +25,4 @@ def spec_c():
     mp.get('Family')
 
 
-spec_a()
+mp.run(spec_a, spec_b)
