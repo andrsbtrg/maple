@@ -25,7 +25,7 @@ class Result:
     def __init__(self, spec_name: str) -> None:
         self.spec_name = spec_name
         self.selected = {}
-        self.assertions = [Assertion]
+        self.assertions : list[Assertion] = []
 
 
 """
@@ -170,10 +170,11 @@ def run(*specs):
     print("---RESULTS---")
     global test_cases
     for case in test_cases:
-        print(case)
-        for assertion in case.assertions:
-            print("Passed:", len(assertion.passed))
-            print("Failed:", len(assertion.failed))
+        print(case.spec_name)
+        assertions = case.assertions
+        for assertion in assertions:
+            print("Passed:", assertion.passed)
+            print("Failed:", assertion.failed)
 
 
 def property_equal(propName, value, obj):
