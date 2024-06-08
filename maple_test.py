@@ -1,4 +1,4 @@
-import mapple as mp
+import maple as mp
 
 
 def spec_a():
