@@ -49,6 +49,9 @@ def get(*args) -> Chainable:
     # debug me!
     print(last_obj)
 
+    # print roof
+    print(last_obj.elements['17'].elements['00'])
+
     something = "some data to assert"
     return Chainable(something)
 
