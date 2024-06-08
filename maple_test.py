@@ -40,4 +40,4 @@ def spec_f():
         .where('type',  '3000 x 3000mm Grid')\
         .its('Absorptance').should('be.equal', 0.1)
 
-mp.run(spec_a, spec_b)
+mp.run(spec_a, spec_b, spec_c, spec_d, spec_e, spec_f)
