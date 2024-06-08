@@ -8,8 +8,8 @@ from .base_extensions import flatten_base
 
 class Assertion:
     def __init__(self) -> None:
-        self.param = ""  # selector like Height or Width
-        self.type = ""  # assertion type "greater than"
+        self.param = ""
+        self.assertion_type = ""
         self.value = None  # what will be compared to
         self.passed = []
         self.failed = []
@@ -28,7 +28,10 @@ class Result:
         self.assertions = [Assertion]
 
 
-test_cases = [Result]
+"""
+Important: this contains the results of the runs
+"""
+test_cases: list[Result] = []
 
 
 class Chainable:
@@ -45,7 +48,7 @@ class Chainable:
         comparer = args[0]
         assertion_value = args[1]
         self.assertion.value = assertion_value
-        self.assertion.type = comparer
+        self.assertion.assertion_type = comparer
 
         # Asserts:
         objs = self.content
@@ -72,7 +75,7 @@ class Chainable:
                 else:
                     self.assertion.it_failed(objs[i].id)
         current.assertions.append(self.assertion)
-        return Chainable(objs)
+        return self
 
     def its(self, property: str) -> Self:
         """
@@ -106,12 +109,14 @@ class Chainable:
         """
         print("Filtering by:", *args)
         global test_cases
-        test_cases[-1].selected[args[0]] = args[1]
+        current = test_cases[-1]
+        current.selected[args[0]] = args[1]
 
         selected = list(filter(lambda obj: property_equal(
             args[0], args[1], obj), self.content))
-        print("Got", len(selected), args[1])
-        return Chainable(selected)
+        print("Got", len(selected))
+        self.content = selected
+        return self
 
 
 def get(*args) -> Chainable:
@@ -161,6 +166,14 @@ def it(test_name):
 def run(*specs):
     for spec in specs:
         spec()
+
+    print("---RESULTS---")
+    global test_cases
+    for case in test_cases:
+        print(case)
+        for assertion in case.assertions:
+            print("Passed:", len(assertion.passed))
+            print("Failed:", len(assertion.failed))
 
 
 def property_equal(propName, value, obj):
