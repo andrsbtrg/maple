@@ -11,7 +11,7 @@ def spec_a():
         .should('be.greater', 2600)  # assert
 
 def spec_b():
-    mp.it("validates SIP 202mm wall type area is greater than 50 m2")
+    mp.it("validates SIP 202mm wall type area is greater than 43 m2")
 
     mp.get('family', 'Basic Wall')\
         .where('type', 'SIP 202mm Wall - conc clad')\
@@ -21,17 +21,19 @@ def spec_b():
 def spec_c():
     mp.it("checks pipe radius")
 
-    mp.get('FamilyType', 'Rohr-PVC').its('Radius').should('be.equal', 20.0)
+    mp.get('category', 'Plumbing Fixtures').its('OmniClass Title').should('have.value', 'Bathtubs')
 
 def spec_d():
     mp.it("validates basic roof`s thermal mass")
 
-    mp.get('family', 'Basic Roof').its('Thermal Mass').should('be.equal', 20.512)
+    mp.get('family', 'Basic Roof')\
+        .where('type', 'SG Metal Panels roof')\
+        .its('Thermal Mass').should('be.equal', 20.512)
 
 def spec_e():
     mp.it("validates columns assembly type.")
 
-    mp.get('family', 'M_Concrete-Round-Column with Drop Caps').its('Assembly Code').should('be.equal', 'B10')
+    mp.get('family', 'M_Concrete-Round-Column with Drop Caps').its('Assembly Code').should('have.value', 'B10')
 
 def spec_f():
     mp.it("validates ceiling thickness is 50")
@@ -39,5 +41,13 @@ def spec_f():
     mp.get('category', 'Ceilings')\
         .where('type',  '3000 x 3000mm Grid')\
         .its('Absorptance').should('be.equal', 0.1)
+    
 
-mp.run(spec_a, spec_b, spec_c, spec_d, spec_e, spec_f)
+def spec_g():
+    mp.it("Checks there are exactly 55 walls")
+
+    mp.get('category', 'Walls')\
+        .should('have.length', 55)
+
+mp.run(spec_a, spec_b, spec_c, spec_d, spec_e, spec_f, spec_g)
+#mp.run(spec_d)

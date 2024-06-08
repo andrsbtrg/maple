@@ -40,6 +40,16 @@ class Chainable:
         self.selector = ""
         self.assertion: Assertion = None
 
+    def should_have_length(self, length) -> Self:
+        objs = self.content
+        if len(objs) == length:
+            self.assertion.it_passed(True)
+        else:
+            self.assertion.it_failed(True)
+        global test_cases
+        current = test_cases[-1]
+        current.assertions.append(self.assertion)
+
     def should(self, *args) -> Self:
         """
         Assert something inside the Chainable
@@ -47,8 +57,13 @@ class Chainable:
         print('Asserting - should:', *args)
         comparer = args[0]
         assertion_value = args[1]
+        if not self.assertion:
+            self.assertion = Assertion()
         self.assertion.value = assertion_value
         self.assertion.assertion_type = comparer
+
+        if comparer == 'have.length':
+            return self.should_have_length(assertion_value)
 
         # Asserts:
         objs = self.content
@@ -66,14 +81,14 @@ class Chainable:
                 if hasattr(attr, 'name'):
                     if getattr(parameters, p)['name'] == self.selector:
                         selected_values.append(attr.value)
+        for i, param_value in enumerate(selected_values):
+            if evaluate(comparer, param_value, assertion_value):
+                self.assertion.it_passed(objs[i].id)
+            else:
+                self.assertion.it_failed(objs[i].id)
+
         global test_cases
         current = test_cases[-1]
-        for i, param_value in enumerate(selected_values):
-            if comparer == 'be.greater':
-                if param_value > assertion_value:
-                    self.assertion.it_passed(objs[i].id)
-                else:
-                    self.assertion.it_failed(objs[i].id)
         current.assertions.append(self.assertion)
         return self
 
@@ -157,6 +172,7 @@ def it(test_name):
     Declare a Spec and log it in the console
     Also should create a new Queue of chainables
     """
+    print("-------------------------------------------------------")
     print("Running test:", test_name)
     global test_cases
     test_cases.append(Result(test_name))
@@ -166,19 +182,40 @@ def it(test_name):
 def run(*specs):
     for spec in specs:
         spec()
+    print_results()
 
+
+def print_results():
+    print("-------------------------------------------------------")
     print("---RESULTS---")
+    print("-------------------------------------------------------")
     global test_cases
     for case in test_cases:
-        print(case.spec_name)
+        print(case.spec_name, end = '')
         assertions = case.assertions
         for assertion in assertions:
-            print("Passed:", assertion.passed)
-            print("Failed:", assertion.failed)
+            if len(assertion.failed) > 0:
+                print(" - Failed")
+                #print(">> ids:", assertion.failed)
+            else:
+                print(" - Passed")
 
 
 def property_equal(propName, value, obj):
     try:
         return getattr(obj, propName) == value
+    except Exception:
+        return False
+
+def evaluate(comparer, param_value, assertion_value):
+    try:
+        if comparer == 'be.greater':
+            return param_value > assertion_value
+        elif comparer == 'be.smaller':
+            return param_value < assertion_value
+        elif comparer == 'have.value':
+            return str(param_value).lower() == str(assertion_value).lower()
+        elif comparer == 'be.equal': # numbers or floats
+            return round(float(param_value),2) == round(float(assertion_value),2)
     except Exception:
         return False
