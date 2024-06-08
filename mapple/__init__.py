@@ -8,23 +8,25 @@ from .base_extensions import flatten_base
 
 class Assertion:
     def __init__(self) -> None:
-        self.param = "" # selector like Height or Width
-        self.type = "" # assertion type "greater than"
-        self.value = None # what will be compared to
+        self.param = ""  # selector like Height or Width
+        self.type = ""  # assertion type "greater than"
+        self.value = None  # what will be compared to
         self.passed = []
         self.failed = []
-    
+
     def it_passed(self, obj_id):
         self.passed.append(obj_id)
 
     def it_failed(self, obj_id):
         self.failed.append(obj_id)
 
+
 class Result:
     def __init__(self, spec_name: str) -> None:
         self.spec_name = spec_name
         self.selected = {}
         self.assertions = [Assertion]
+
 
 test_cases = [Result]
 
@@ -54,11 +56,12 @@ class Chainable:
             parameters = getattr(obj, "parameters")
             if parameters is None:
                 raise AttributeError("no parameters")
-            params = [a for a in dir(parameters) if not a.startswith('_') and not callable(getattr(parameters, a))]
-            for p in params:          
-                attr = getattr(parameters,p)
+            params = [a for a in dir(parameters) if not a.startswith(
+                '_') and not callable(getattr(parameters, a))]
+            for p in params:
+                attr = getattr(parameters, p)
                 if hasattr(attr, 'name'):
-                    if getattr(parameters,p)['name'] == self.selector:
+                    if getattr(parameters, p)['name'] == self.selector:
                         selected_values.append(attr.value)
         global test_cases
         current = test_cases[-1]
@@ -81,17 +84,17 @@ class Chainable:
         self.assertion.param = property
 
         objs = self.content
-        selected_param_values = []
         for obj in objs:
             parameters = getattr(obj, "parameters")
             if parameters is None:
                 raise AttributeError("no parameters")
-            params = [a for a in dir(parameters) if not a.startswith('_') and not callable(getattr(parameters, a))]
+            params = [a for a in dir(parameters) if not a.startswith(
+                '_') and not callable(getattr(parameters, a))]
             found = False
-            for p in params:          
-                attr = getattr(parameters,p)
+            for p in params:
+                attr = getattr(parameters, p)
                 if hasattr(attr, 'name'):
-                    if getattr(parameters,p)['name'] == self.selector:
+                    if getattr(parameters, p)['name'] == self.selector:
                         found = True
             if not found:
                 self.assertion.it_failed(obj.id)
@@ -154,9 +157,11 @@ def it(test_name):
     test_cases.append(Result(test_name))
     return
 
+
 def run(*specs):
     for spec in specs:
         spec()
+
 
 def property_equal(propName, value, obj):
     try:
