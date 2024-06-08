@@ -3,6 +3,7 @@ from specklepy.api.client import SpeckleClient
 from specklepy.api.credentials import get_default_account
 from specklepy.api import operations
 from specklepy.transports.server.server import ServerTransport
+from .base_extensions import flatten
 
 
 class Chainable:
@@ -46,14 +47,19 @@ def get(*args) -> Chainable:
     last_obj = operations.receive(
         obj_id=last_obj_id, remote_transport=transport)
 
-    # debug me!
-    print(last_obj)
+    objs = list(flatten(last_obj))
+    # for obj in objs:
+    #     print(obj['category'], obj)
 
-    # print roof
-    print(last_obj.elements['17'].elements['00'])
+    selected = list(filter(
+        lambda obj: obj['speckle_type'] == 'Objects.Other.Revit.RevitInstance', objs))
+    print(len(selected), "Windows")
+    for s in selected:
+        print(s['id'])
 
-    something = "some data to assert"
-    return Chainable(something)
+    # print(last_obj.elements['17'].elements['00'])
+
+    return Chainable(selected)
 
 
 def it(test_name):
