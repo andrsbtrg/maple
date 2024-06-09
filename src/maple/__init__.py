@@ -4,6 +4,7 @@ from specklepy.api.credentials import get_default_account
 from specklepy.api import operations
 from specklepy.transports.server.server import ServerTransport
 from .base_extensions import flatten_base
+from specklepy.objects import Base
 
 
 class Assertion:
@@ -25,13 +26,14 @@ class Result:
     def __init__(self, spec_name: str) -> None:
         self.spec_name = spec_name
         self.selected = {}
-        self.assertions : list[Assertion] = []
+        self.assertions: list[Assertion] = []
 
 
 """
 Important: this contains the results of the runs
 """
 test_cases: list[Result] = []
+current_object: Base = None
 
 
 class Chainable:
@@ -134,6 +136,12 @@ class Chainable:
         return self
 
 
+def init(obj: Base):
+    global current_object
+    current_object = obj
+    return
+
+
 def get(*args) -> Chainable:
     """Mostly do speckle queries and then
     save them inside the Chainable object"""
@@ -142,7 +150,23 @@ def get(*args) -> Chainable:
     global test_cases
     test_cases[-1].selected[args[0]] = args[1]
 
-    # get something
+    global current_object
+    if current_object is None:
+        last_commit = get_last_obj()
+    else:
+        last_commit = current_object
+
+    objs = list(flatten_base(last_commit))
+
+    selected = list(filter(
+        lambda obj: property_equal(args[0], args[1], obj), objs))
+    print("Got", len(selected), args[1])
+
+    return Chainable(selected)
+
+
+def get_last_obj():
+    # get some objets
     client = SpeckleClient(host='https://latest.speckle.systems')
     # authenticate the client with a token
     account = get_default_account()
@@ -157,14 +181,7 @@ def get(*args) -> Chainable:
     last_obj_id = client.commit.list(stream_id)[0].referencedObject
     last_obj = operations.receive(
         obj_id=last_obj_id, remote_transport=transport)
-
-    objs = list(flatten_base(last_obj))
-
-    selected = list(filter(
-        lambda obj: property_equal(args[0], args[1], obj), objs))
-    print("Got", len(selected), args[1])
-
-    return Chainable(selected)
+    return last_obj
 
 
 def it(test_name):
@@ -191,12 +208,12 @@ def print_results():
     print("-------------------------------------------------------")
     global test_cases
     for case in test_cases:
-        print(case.spec_name, end = '')
+        print(case.spec_name, end='')
         assertions = case.assertions
         for assertion in assertions:
             if len(assertion.failed) > 0:
                 print(" - Failed")
-                #print(">> ids:", assertion.failed)
+                # print(">> ids:", assertion.failed)
             else:
                 print(" - Passed")
 
@@ -207,6 +224,7 @@ def property_equal(propName, value, obj):
     except Exception:
         return False
 
+
 def evaluate(comparer, param_value, assertion_value):
     try:
         if comparer == 'be.greater':
@@ -215,7 +233,7 @@ def evaluate(comparer, param_value, assertion_value):
             return param_value < assertion_value
         elif comparer == 'have.value':
             return str(param_value).lower() == str(assertion_value).lower()
-        elif comparer == 'be.equal': # numbers or floats
-            return round(float(param_value),2) == round(float(assertion_value),2)
+        elif comparer == 'be.equal':  # numbers or floats
+            return round(float(param_value), 2) == round(float(assertion_value), 2)
     except Exception:
         return False
