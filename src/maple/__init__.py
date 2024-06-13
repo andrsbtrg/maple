@@ -184,7 +184,11 @@ def get_last_obj():
     client = SpeckleClient(host="https://latest.speckle.systems")
     # authenticate the client with a token
     account = get_default_account()
-    client.authenticate_with_account(account)
+    if account:
+        client.authenticate_with_account(account)
+    else:
+        token = get_token()
+        client.authenticate_with_token(token)
 
     global stream_id
     if stream_id == "":
@@ -252,3 +256,8 @@ def evaluate(comparer, param_value, assertion_value):
             return round(float(param_value), 2) == round(float(assertion_value), 2)
     except Exception:
         return False
+
+
+def get_token():
+    import os
+    return os.environ("SPECKLE_TOKEN")
