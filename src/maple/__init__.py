@@ -1,4 +1,4 @@
-from typing import Self
+from typing_extensions import Self
 from specklepy.api.client import SpeckleClient
 from specklepy.api.credentials import get_default_account
 from specklepy.api import operations
