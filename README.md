@@ -1,17 +1,21 @@
 # Maple
 
-### Automate your model Quality Check with Speckle and Maple
+## Automate your model Quality Check with Speckle and Maple
 
-### About:
+### About
 
-Maple is a library designed to write simple code that can check different attributes of a Model in Speckle.
+Maple is a library designed to write simple code that can check
+different attributes of a Model in Speckle.
 
-Using Maple you can write `test specs` that check any parameter or quantity inside the project model.
+Using Maple you can write `test specs` that check any parameter
+or quantity inside the project model.
 
-`Maple` can be integrated into [Speckle Automate]() to run the quality check tests on a continuous integration and ensure project standards.
+`Maple` can be integrated into [Speckle Automate](https://speckle.systems/blog/automate-with-speckle/)
+to run the quality check tests on a continuous integration and ensure project standards.
 
-### Get started:
-To run locally:
+### Get started
+
+Simple case:
 
 ```py
 import maple as mp
@@ -25,5 +29,15 @@ def spec_a():
         .its('Height')\
         .should('be.greater', 2600)
 
+
+mp.stream("streamid")
 mp.run(spec_a)
-``
+```
+
+To run the examples locally, install the current package:
+
+```sh
+pip install .
+python examples/specs.py
+
+```
