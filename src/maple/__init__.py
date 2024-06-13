@@ -34,6 +34,7 @@ Important: this contains the results of the runs
 """
 test_cases: list[Result] = []
 current_object: Base = None
+stream_id: str = ""
 
 
 class Chainable:
@@ -136,7 +137,8 @@ class Chainable:
         current.selected[args[0]] = args[1]
 
         selected = list(
-            filter(lambda obj: property_equal(args[0], args[1], obj), self.content)
+            filter(lambda obj: property_equal(
+                args[0], args[1], obj), self.content)
         )
         print("Got", len(selected))
         self.content = selected
@@ -147,6 +149,11 @@ def init(obj: Base):
     global current_object
     current_object = obj
     return
+
+
+def stream(id: str):
+    global stream_id
+    stream_id = id
 
 
 def get(*args) -> Chainable:
@@ -165,7 +172,8 @@ def get(*args) -> Chainable:
 
     objs = list(flatten_base(last_commit))
 
-    selected = list(filter(lambda obj: property_equal(args[0], args[1], obj), objs))
+    selected = list(
+        filter(lambda obj: property_equal(args[0], args[1], obj), objs))
     print("Got", len(selected), args[1])
 
     return Chainable(selected)
@@ -178,14 +186,16 @@ def get_last_obj():
     account = get_default_account()
     client.authenticate_with_account(account)
 
-    stream_id = "24fa0ed1c3"
-    # print(client)
+    global stream_id
+    if stream_id == "":
+        raise Exception("Please provide a Stream id using mp.stream()")
     # stream = client.stream.get(id=stream_id)
 
     transport = ServerTransport(client=client, stream_id=stream_id)
 
     last_obj_id = client.commit.list(stream_id)[0].referencedObject
-    last_obj = operations.receive(obj_id=last_obj_id, remote_transport=transport)
+    last_obj = operations.receive(
+        obj_id=last_obj_id, remote_transport=transport)
     return last_obj
 
 
