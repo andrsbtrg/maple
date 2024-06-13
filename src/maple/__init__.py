@@ -260,4 +260,4 @@ def evaluate(comparer, param_value, assertion_value):
 
 def get_token():
     import os
-    return os.environ("SPECKLE_TOKEN")
+    return os.environ["SPECKLE_TOKEN"]
