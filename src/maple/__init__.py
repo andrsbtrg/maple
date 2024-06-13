@@ -56,7 +56,7 @@ class Chainable:
         """
         Assert something inside the Chainable
         """
-        print('Asserting - should:', *args)
+        print("Asserting - should:", *args)
         comparer = args[0]
         assertion_value = args[1]
         if not self.assertion:
@@ -64,7 +64,7 @@ class Chainable:
         self.assertion.value = assertion_value
         self.assertion.assertion_type = comparer
 
-        if comparer == 'have.length':
+        if comparer == "have.length":
             return self.should_have_length(assertion_value)
 
         # Asserts:
@@ -76,12 +76,15 @@ class Chainable:
             parameters = getattr(obj, "parameters")
             if parameters is None:
                 raise AttributeError("no parameters")
-            params = [a for a in dir(parameters) if not a.startswith(
-                '_') and not callable(getattr(parameters, a))]
+            params = [
+                a
+                for a in dir(parameters)
+                if not a.startswith("_") and not callable(getattr(parameters, a))
+            ]
             for p in params:
                 attr = getattr(parameters, p)
-                if hasattr(attr, 'name'):
-                    if getattr(parameters, p)['name'] == self.selector:
+                if hasattr(attr, "name"):
+                    if getattr(parameters, p)["name"] == self.selector:
                         selected_values.append(attr.value)
         for i, param_value in enumerate(selected_values):
             if evaluate(comparer, param_value, assertion_value):
@@ -98,7 +101,7 @@ class Chainable:
         """
         Selector of what is inside the Chainable object
         """
-        print('Selecting', property)
+        print("Selecting", property)
         self.selector = property
         self.assertion = Assertion()
         self.assertion.param = property
@@ -108,13 +111,16 @@ class Chainable:
             parameters = getattr(obj, "parameters")
             if parameters is None:
                 raise AttributeError("no parameters")
-            params = [a for a in dir(parameters) if not a.startswith(
-                '_') and not callable(getattr(parameters, a))]
+            params = [
+                a
+                for a in dir(parameters)
+                if not a.startswith("_") and not callable(getattr(parameters, a))
+            ]
             found = False
             for p in params:
                 attr = getattr(parameters, p)
-                if hasattr(attr, 'name'):
-                    if getattr(parameters, p)['name'] == self.selector:
+                if hasattr(attr, "name"):
+                    if getattr(parameters, p)["name"] == self.selector:
                         found = True
             if not found:
                 self.assertion.it_failed(obj.id)
@@ -129,8 +135,9 @@ class Chainable:
         current = test_cases[-1]
         current.selected[args[0]] = args[1]
 
-        selected = list(filter(lambda obj: property_equal(
-            args[0], args[1], obj), self.content))
+        selected = list(
+            filter(lambda obj: property_equal(args[0], args[1], obj), self.content)
+        )
         print("Got", len(selected))
         self.content = selected
         return self
@@ -158,8 +165,7 @@ def get(*args) -> Chainable:
 
     objs = list(flatten_base(last_commit))
 
-    selected = list(filter(
-        lambda obj: property_equal(args[0], args[1], obj), objs))
+    selected = list(filter(lambda obj: property_equal(args[0], args[1], obj), objs))
     print("Got", len(selected), args[1])
 
     return Chainable(selected)
@@ -167,7 +173,7 @@ def get(*args) -> Chainable:
 
 def get_last_obj():
     # get some objets
-    client = SpeckleClient(host='https://latest.speckle.systems')
+    client = SpeckleClient(host="https://latest.speckle.systems")
     # authenticate the client with a token
     account = get_default_account()
     client.authenticate_with_account(account)
@@ -179,8 +185,7 @@ def get_last_obj():
     transport = ServerTransport(client=client, stream_id=stream_id)
 
     last_obj_id = client.commit.list(stream_id)[0].referencedObject
-    last_obj = operations.receive(
-        obj_id=last_obj_id, remote_transport=transport)
+    last_obj = operations.receive(obj_id=last_obj_id, remote_transport=transport)
     return last_obj
 
 
@@ -208,7 +213,7 @@ def print_results():
     print("-------------------------------------------------------")
     global test_cases
     for case in test_cases:
-        print(case.spec_name, end='')
+        print(case.spec_name, end="")
         assertions = case.assertions
         for assertion in assertions:
             if len(assertion.failed) > 0:
@@ -227,13 +232,13 @@ def property_equal(propName, value, obj):
 
 def evaluate(comparer, param_value, assertion_value):
     try:
-        if comparer == 'be.greater':
+        if comparer == "be.greater":
             return param_value > assertion_value
-        elif comparer == 'be.smaller':
+        elif comparer == "be.smaller":
             return param_value < assertion_value
-        elif comparer == 'have.value':
+        elif comparer == "have.value":
             return str(param_value).lower() == str(assertion_value).lower()
-        elif comparer == 'be.equal':  # numbers or floats
+        elif comparer == "be.equal":  # numbers or floats
             return round(float(param_value), 2) == round(float(assertion_value), 2)
     except Exception:
         return False
