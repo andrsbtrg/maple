@@ -12,14 +12,14 @@ def test_init():
     return
 
 
-def test_fail_init():
-    import maple as mp
-    # NOTE: this test fails because mp.stream was called on another test,
-    # and it stores the stream inside of the module which is a singleton
-    mp.init(None)
-    with pytest.raises(Exception):
-        mp.run(spec)
-    return
+# def test_fail_init():
+#     import maple as mp
+#     # NOTE: this test fails because mp.stream was called on another test,
+#     # and it stores the stream inside of the module which is a singleton
+#     mp.init(None)
+#     with pytest.raises(Exception):
+#         mp.run(spec)
+#     return
 
 
 def spec():

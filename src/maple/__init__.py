@@ -183,7 +183,8 @@ def get_last_obj():
     # get some objets
     client = SpeckleClient(host="https://latest.speckle.systems")
     # authenticate the client with a token
-    account = get_default_account()
+    # account = get_default_account()
+    account = None
     if account:
         client.authenticate_with_account(account)
     else:
@@ -260,4 +261,7 @@ def evaluate(comparer, param_value, assertion_value):
 
 def get_token():
     import os
-    return os.environ["SPECKLE_TOKEN"]
+    token = os.environ["SPECKLE_TOKEN"]
+    if token == "":
+        print("token is empty")
+    return token
