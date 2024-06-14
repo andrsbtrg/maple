@@ -38,5 +38,4 @@ jobs:
     - name: Test with pytest
       env:
         SPECKLE_TOKEN: ${{secrets.SPECKLE_TOKEN}}}
-      run: |
-        pytest 
+      run: pytest 
