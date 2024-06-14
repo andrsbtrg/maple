@@ -38,5 +38,7 @@ jobs:
     - name: Test with pytest
       env:
         SPECKLE_TOKEN: $SPECKLE_TOKEN
+        TEST_VAR: $SAMPLE_VARIABLE
       run: |
+        echo $TEST_VAR
         pytest 
