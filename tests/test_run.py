@@ -2,7 +2,9 @@ import pytest
 
 
 def test_init():
+    import os
     import maple as mp
+    print(os.environ["SAMPLE_VARIABLE"])
     stream_id = "24fa0ed1c3"
     # pass None to force mp to use the stream id to get object
     mp.init(None)
