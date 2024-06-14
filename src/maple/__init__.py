@@ -261,7 +261,7 @@ def evaluate(comparer, param_value, assertion_value):
 
 def get_token():
     import os
-    token = os.environ["SPECKLE_TOKEN"]
-    if token == "":
+    token = os.getenv("SPECKLE_TOKEN")
+    if token is None:
         print("token is empty")
     return token
