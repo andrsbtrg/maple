@@ -1,32 +1,15 @@
-from typing_extensions import Self
+from typing_extensions import Self, Callable
 from specklepy.api.client import SpeckleClient
 from specklepy.api.credentials import get_default_account
 from specklepy.api import operations
 from specklepy.transports.server.server import ServerTransport
-from .base_extensions import flatten_base
 from specklepy.objects import Base
 
-
-class Assertion:
-    def __init__(self) -> None:
-        self.param = ""
-        self.assertion_type = ""
-        self.value = None  # what will be compared to
-        self.passed = []
-        self.failed = []
-
-    def it_passed(self, obj_id):
-        self.passed.append(obj_id)
-
-    def it_failed(self, obj_id):
-        self.failed.append(obj_id)
-
-
-class Result:
-    def __init__(self, spec_name: str) -> None:
-        self.spec_name = spec_name
-        self.selected = {}
-        self.assertions: list[Assertion] = []
+# maple imports
+from .base_extensions import flatten_base
+from .utils import print_results
+from .ops import evaluate, property_equal, CompOp
+from .models import Result, Assertion
 
 
 # GLOBALS
@@ -110,7 +93,14 @@ class Chainable:
         self.selector = ""
         self.assertion: Assertion = None
 
-    def should_have_length(self, length) -> Self:
+    def _should_have_length(self, length: int) -> Self:
+        """
+        Use to check wether the content has length equal to length
+
+        Args:
+            length (int): length to compare
+
+        """
         objs = self.content
         if len(objs) == length:
             self.assertion.it_passed(True)
@@ -119,20 +109,24 @@ class Chainable:
         current = get_current_test_case()
         current.assertions.append(self.assertion)
 
-    def should(self, *args) -> Self:
+    def should(self, comparer: CompOp, assertion_value) -> Self:
         """
         Assert something inside the Chainable
+        Args:
+            comparer: one of CompOp possible enum values
+            assertion_value: value to assert
+
         """
-        print("Asserting - should:", *args)
-        comparer = args[0]
-        assertion_value = args[1]
+        if comparer not in CompOp:
+            raise TypeError(f"{comparer} is not a supported CompOp enum")
+        print("Asserting - should:", comparer, assertion_value)
         if not self.assertion:
             self.assertion = Assertion()
         self.assertion.value = assertion_value
         self.assertion.assertion_type = comparer
 
-        if comparer == "have.length":
-            return self.should_have_length(assertion_value)
+        if comparer == CompOp.HAVE_LENGTH:
+            return self._should_have_length(assertion_value)
 
         # Asserts:
         objs = self.content
@@ -165,7 +159,16 @@ class Chainable:
 
     def its(self, property: str) -> Self:
         """
-        Selector of what is inside the Chainable object
+        Selector of a parameter inside the Chainable object
+
+        Args:
+            property: name of parameter to select from content
+
+        Returns: Chainable
+
+        Raises:
+            AttributeError: if the parameter name does not match in the
+            inner object selected with get
         """
         print("Selecting", property)
         self.selector = property
@@ -209,10 +212,15 @@ class Chainable:
         return self
 
 
-def it(test_name):
+def it(test_name: str):
     """
     Declare a Spec and log it in the console
     Also should create a new Queue of chainables
+
+    Args:
+        test_name: name of the test case
+
+    Returns: None
     """
     print("-------------------------------------------------------")
     print("Running test:", test_name)
@@ -265,44 +273,14 @@ def get_last_obj() -> Base:
     return last_obj
 
 
-def run(*specs):
+def run(*specs: Callable):
+    """
+    Runs any number of spec functions passed by args
+    Args:
+        *specs: Callable
+    """
     for spec in specs:
         spec()
-    print_results()
 
-
-def print_results():
-    print("-------------------------------------------------------")
-    print("---RESULTS---")
-    print("-------------------------------------------------------")
-    test_cases = get_test_cases()
-    for case in test_cases:
-        print(case.spec_name, end="")
-        assertions = case.assertions
-        for assertion in assertions:
-            if len(assertion.failed) > 0:
-                print(" - Failed")
-                # print(">> ids:", assertion.failed)
-            else:
-                print(" - Passed")
-
-
-def property_equal(propName, value, obj):
-    try:
-        return getattr(obj, propName) == value
-    except Exception:
-        return False
-
-
-def evaluate(comparer, param_value, assertion_value):
-    try:
-        if comparer == "be.greater":
-            return param_value > assertion_value
-        elif comparer == "be.smaller":
-            return param_value < assertion_value
-        elif comparer == "have.value":
-            return str(param_value).lower() == str(assertion_value).lower()
-        elif comparer == "be.equal":  # numbers or floats
-            return round(float(param_value), 2) == round(float(assertion_value), 2)
-    except Exception:
-        return False
+    # print results
+    print_results(get_test_cases())

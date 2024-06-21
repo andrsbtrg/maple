@@ -1,8 +1,7 @@
-import pytest
+import maple as mp
 
 
 def test_init():
-    import maple as mp
     stream_id = "24fa0ed1c3"
     # pass None to force mp to use the stream id to get object
     mp.init(None)
@@ -23,7 +22,6 @@ def test_init():
 
 
 def spec():
-    import maple as mp
     mp.it("checks window height is greater than 2600 mm")
 
     mp.get('category', 'Windows')\
