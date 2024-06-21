@@ -7,7 +7,7 @@ def test_init():
     mp.init(None)
     mp.stream(stream_id)
     mp.run(spec)
-    assert mp.stream_id == stream_id
+    assert mp._stream_id == stream_id
     return
 
 

@@ -14,17 +14,17 @@ from .models import Result, Assertion
 
 # GLOBALS
 # TODO: Refactor to remove globals
-test_cases: list[Result] = []  # NOTE: this contains the results of the runs
-current_object: Base = None
-stream_id: str = ""
+_test_cases: list[Result] = []  # NOTE: this contains the results of the runs
+_current_object: Base = None
+_stream_id: str = ""
 
 
 def init(obj: Base) -> None:
     """
     Sets the obj as current object
     """
-    global current_object
-    current_object = obj
+    global _current_object
+    _current_object = obj
     return
 
 
@@ -32,8 +32,8 @@ def stream(id: str) -> None:
     """
     Set the stream_id
     """
-    global stream_id
-    stream_id = id
+    global _stream_id
+    _stream_id = id
     return
 
 
@@ -54,26 +54,26 @@ def get_stream_id() -> str:
     """
     Gets the stream_id provided with mp.stream()
     """
-    global stream_id
-    if stream_id == "":
+    global _stream_id
+    if _stream_id == "":
         raise Exception("Please provide a Stream id using mp.stream()")
-    return stream_id
+    return _stream_id
 
 
 def get_current_obj() -> Base:
     """
     Get the current object specified with mp.init()
     """
-    global current_object
-    return current_object
+    global _current_object
+    return _current_object
 
 
 def get_current_test_case() -> Result:
     """
     Get the current test case
     """
-    global test_cases
-    current = test_cases[-1]
+    global _test_cases
+    current = _test_cases[-1]
     return current
 
 
@@ -81,8 +81,8 @@ def get_test_cases() -> [Result]:
     """
     Gets the list of Test Cases
     """
-    global test_cases
-    return test_cases
+    global _test_cases
+    return _test_cases
 
 # endof GLOBALS
 
