@@ -12,7 +12,7 @@ def print_results(test_cases: [Result]):
         print(case.spec_name, end="")
         assertions = case.assertions
         for assertion in assertions:
-            if len(assertion.set_failed) > 0:
+            if len(assertion.failing) > 0:
                 print(" - Failed")
                 # print(">> ids:", assertion.failed)
             else:

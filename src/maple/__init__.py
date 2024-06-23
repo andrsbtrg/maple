@@ -182,7 +182,7 @@ class Chainable:
         if not self.assertion:
             self.assertion = Assertion()
         self.assertion.value = assertion_value
-        self.assertion.assertion_type = comparer
+        self.assertion.comparer = comparer_op
 
         if comparer_op == CompOp.HAVE_LENGTH:
             return self._should_have_length(assertion_value)

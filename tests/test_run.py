@@ -8,6 +8,13 @@ def test_init():
     mp.stream(stream_id)
     mp.run(spec)
     assert mp._stream_id == stream_id
+    test_case = mp.get_current_test_case()
+
+    assert test_case is not None
+    assert len(test_case.assertions) == 1
+    assert not test_case.assertions[0].passed()
+    assert test_case.assertions[0].failed()
+
     return
 
 

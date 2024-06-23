@@ -1,27 +1,42 @@
+import maple
+
+
 class Assertion:
     """
     Contains parameters and result of performing an assertion on
     Speckle objects and its values
 
     Attributes:
-        assertion_type:
-        value:
-        passed:
-        failed:
+        comparer: Comparison Operation used to check assertion
+        value: Value used to assert
+        passing: List of Ids that passed assertion
+        failing: List of Ids that failed assertion
 
     """
 
     def __init__(self) -> None:
-        self.assertion_type = ""
+        self.comparer: maple.CompOp = None
         self.value = None  # what will be compared to
-        self.passed = []
-        self.set_failed = []
+        self.passing = []
+        self.failing = []
 
     def set_passed(self, obj_id):
-        self.passed.append(obj_id)
+        self.passing.append(obj_id)
 
     def set_failed(self, obj_id):
-        self.set_failed.append(obj_id)
+        self.failing.append(obj_id)
+
+    def passed(self) -> bool:
+        """
+        True if not any failing value
+        """
+        return len(self.failing) == 0
+
+    def failed(self) -> bool:
+        """
+        True if any failing value
+        """
+        return len(self.failing) > 0
 
 
 class Result:
