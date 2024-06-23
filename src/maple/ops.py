@@ -34,9 +34,6 @@ class CompOp(StrEnum):
 
 
 def evaluate(comparer: CompOp, param_value, assertion_value):
-    if comparer not in CompOp:
-        # debug log
-        return False
     try:
         if comparer == CompOp.BE_GREATER:
             return param_value > assertion_value

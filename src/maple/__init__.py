@@ -117,8 +117,7 @@ class Chainable:
             assertion_value: value to assert
 
         """
-        if comparer not in CompOp:
-            raise TypeError(f"{comparer} is not a supported CompOp enum")
+        # NOTE: using is instance since member not in Enum raises error until python 3.12
         print("Asserting - should:", comparer, assertion_value)
         if not self.assertion:
             self.assertion = Assertion()
