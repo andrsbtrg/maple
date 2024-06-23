@@ -1,4 +1,5 @@
 from typing_extensions import Self, Callable
+from typing import Any
 from specklepy.api.client import SpeckleClient
 from specklepy.api.credentials import get_default_account
 from specklepy.api import operations
@@ -8,13 +9,13 @@ from specklepy.objects import Base
 # maple imports
 from .base_extensions import flatten_base
 from .utils import print_results
-from .ops import evaluate, property_equal, CompOp
+from .ops import property_equal, CompOp
 from .models import Result, Assertion
 
 
 # GLOBALS
 # TODO: Refactor to remove globals
-_test_cases: list[Result] = []  # NOTE: this contains the results of the runs
+_test_cases: list[Result] = []  # Contains the results of the runs
 _current_object: Base = None
 _stream_id: str = ""
 
@@ -77,7 +78,7 @@ def get_current_test_case() -> Result:
     return current
 
 
-def get_test_cases() -> [Result]:
+def get_test_cases() -> list[Result]:
     """
     Gets the list of Test Cases
     """
@@ -93,45 +94,22 @@ class Chainable:
         self.selector = ""
         self.assertion: Assertion = None
 
-    def _should_have_length(self, length: int) -> Self:
+    def _select_parameters_values(self, parameter_name: str) -> list[Any]:
         """
-        Use to check wether the content has length equal to length
+        Gets a list of the values of each object in self.content
+        where the parameter_name matches
 
         Args:
-            length (int): length to compare
+            parameter_name:
+
+        Returns: a list of the value of the parameter matching
+
+        Raises:
+            AttributeError:
 
         """
+        parameter_values = []
         objs = self.content
-        if len(objs) == length:
-            self.assertion.it_passed(True)
-        else:
-            self.assertion.it_failed(True)
-        current = get_current_test_case()
-        current.assertions.append(self.assertion)
-
-    def should(self, comparer: CompOp, assertion_value) -> Self:
-        """
-        Assert something inside the Chainable
-        Args:
-            comparer: one of CompOp possible enum values
-            assertion_value: value to assert
-
-        """
-        # NOTE: using is instance since member not in Enum raises error until python 3.12
-        print("Asserting - should:", comparer, assertion_value)
-        if not self.assertion:
-            self.assertion = Assertion()
-        self.assertion.value = assertion_value
-        self.assertion.assertion_type = comparer
-
-        if comparer == CompOp.HAVE_LENGTH:
-            return self._should_have_length(assertion_value)
-
-        # Asserts:
-        objs = self.content
-
-        selected_values = []
-        # store results in the last Results in test_cases
         for obj in objs:
             parameters = getattr(obj, "parameters")
             if parameters is None:
@@ -144,17 +122,72 @@ class Chainable:
             for p in params:
                 attr = getattr(parameters, p)
                 if hasattr(attr, "name"):
-                    if getattr(parameters, p)["name"] == self.selector:
-                        selected_values.append(attr.value)
+                    if getattr(parameters, p)["name"] == parameter_name:
+                        parameter_values.append(attr.value)
+        return parameter_values
+
+    def _should_have_length(self, length: int) -> Self:
+        """
+        Use to check wether the content has length equal to length
+
+        Args:
+            length (int): length to compare
+
+        """
+        objs = self.content
+        if len(objs) == length:
+            self.assertion.set_passed('have.length')
+        else:
+            self.assertion.set_failed('have.length')
+        current = get_current_test_case()
+        current.assertions.append(self.assertion)
+
+    def _should_have_param_value(self, comparer: CompOp, assertion_value: Any) -> Self:
+        """
+        Using the comparer will get the parameter given by the self.selector
+        for each object and compare each one against assertion_value
+
+        Args:
+            comparer: CompOp
+            assertion_value: any value to compare
+
+        Returns: Chainable
+        """
+        selected_values = self._select_parameters_values(self.selector)
+
+        objs = self.content
+
+        # store results in the last Results in test_cases
         for i, param_value in enumerate(selected_values):
-            if evaluate(comparer, param_value, assertion_value):
-                self.assertion.it_passed(objs[i].id)
+            if comparer.evaluate(param_value, assertion_value):
+                self.assertion.set_passed(objs[i].id)
             else:
-                self.assertion.it_failed(objs[i].id)
+                self.assertion.set_failed(objs[i].id)
 
         current = get_current_test_case()
         current.assertions.append(self.assertion)
         return self
+
+    def should(self, comparer: CompOp, assertion_value) -> Self:
+        """
+        Assert something inside the Chainable
+        Args:
+            comparer: one of CompOp possible enum values
+            assertion_value: value to assert
+        Raises: ValueError if comparer is not a defined CompOp
+        Returns: Chainable
+        """
+        print("Asserting - should:", comparer, assertion_value)
+        comparer_op = CompOp(comparer)
+        if not self.assertion:
+            self.assertion = Assertion()
+        self.assertion.value = assertion_value
+        self.assertion.assertion_type = comparer
+
+        if comparer_op == CompOp.HAVE_LENGTH:
+            return self._should_have_length(assertion_value)
+        else:
+            return self._should_have_param_value(comparer_op, assertion_value)
 
     def its(self, property: str) -> Self:
         """
@@ -172,7 +205,6 @@ class Chainable:
         print("Selecting", property)
         self.selector = property
         self.assertion = Assertion()
-        self.assertion.param = property
 
         objs = self.content
         for obj in objs:
@@ -191,30 +223,37 @@ class Chainable:
                     if getattr(parameters, p)["name"] == self.selector:
                         found = True
             if not found:
-                self.assertion.it_failed(obj.id)
+                self.assertion.set_failed(obj.id)
         return self
 
-    def where(self, *args) -> Self:
+    def where(self, selector: str, value: str) -> Self:
         """
-        filters more the Chainable
+        Filters the current Speckle objects aquired by mp.get()
+        where the object's own property 'selector' is equal to 'value'
+        Args:
+            selector: The name of a property of a Speckle Object to select
+                e.g: type
+            value: The name of the value of the property to be filtered
+
+        Returns: Chainable
         """
-        print("Filtering by:", *args)
+        print("Filtering by:", selector, value)
         current = get_current_test_case()
-        current.selected[args[0]] = args[1]
+        current.selected[selector] = value
 
         selected = list(
             filter(lambda obj: property_equal(
-                args[0], args[1], obj), self.content)
+                selector, value, obj), self.content)
         )
         print("Got", len(selected))
         self.content = selected
         return self
 
 
-def it(test_name: str):
+def it(spec_name: str):
     """
-    Declare a Spec and log it in the console
-    Also should create a new Queue of chainables
+    Declares a new Spec and stores it globally in the test cases.
+    The next time mp.get() is called, it will be part of this spec name
 
     Args:
         test_name: name of the test case
@@ -222,18 +261,30 @@ def it(test_name: str):
     Returns: None
     """
     print("-------------------------------------------------------")
-    print("Running test:", test_name)
-    get_test_cases().append(Result(test_name))
-    return
+    print("Running test:", spec_name)
+    get_test_cases().append(Result(spec_name))
 
 
-def get(*args) -> Chainable:
-    """Mostly do speckle queries and then
-    save them inside the Chainable object"""
+def get(selector: str, value: str) -> Chainable:
+    """
+    Does a speckle queries and then filters by 'selector'.
+    Returns the selected items inside the Chainable object
+    to start a chain of assertions
 
-    print("Getting", *args)
+    Args:
+        selector: The name of a property of a Speckle Object to select
+            e.g: category, family
+        value: The objects whose selector matches this value will be filtered
+
+    Returns: Chainable
+
+    Raises:
+        Exception: If it was not possible to query a speckle object
+    """
+
+    print("Getting", selector, value)
     current_test = get_current_test_case()
-    current_test.selected[args[0]] = args[1]
+    current_test.selected[selector] = value
 
     speckle_obj = get_current_obj()
     if not speckle_obj:
@@ -244,8 +295,8 @@ def get(*args) -> Chainable:
     objs = list(flatten_base(speckle_obj))
 
     selected = list(
-        filter(lambda obj: property_equal(args[0], args[1], obj), objs))
-    print("Got", len(selected), args[1])
+        filter(lambda obj: property_equal(selector, value, obj), objs))
+    print("Got", len(selected), value)
 
     return Chainable(selected)
 

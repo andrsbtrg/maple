@@ -4,6 +4,8 @@ Contains functions to handle operations between Base and comparisons
 
 from specklepy.objects import Base
 from enum import StrEnum
+from typing import Any
+from .models import Assertion
 
 
 def property_equal(propName: str, value: str, obj: Base):
@@ -24,7 +26,7 @@ def property_equal(propName: str, value: str, obj: Base):
 
 class CompOp(StrEnum):
     """
-    Enum with possible comparison operations
+    Comparison (assertion) operations
     """
     BE_GREATER = 'be.greater'
     BE_SMALLER = 'be.smaller'
@@ -32,16 +34,25 @@ class CompOp(StrEnum):
     HAVE_VALUE = 'have.value'
     HAVE_LENGTH = 'have.length'
 
+    def evaluate(self, param_value: Any, assertion_value: Any) -> bool:
+        """
+        Checks if the param_value evaluates to the assertion_value
+        accordinf to the CompOp
 
-def evaluate(comparer: CompOp, param_value, assertion_value):
-    try:
-        if comparer == CompOp.BE_GREATER:
-            return param_value > assertion_value
-        elif comparer == CompOp.BE_SMALLER:
-            return param_value < assertion_value
-        elif comparer == CompOp.HAVE_VALUE:
-            return str(param_value).lower() == str(assertion_value).lower()
-        elif comparer == CompOp.BE_EQUAL:  # numbers or floats
-            return round(float(param_value), 2) == round(float(assertion_value), 2)
-    except Exception:
-        return False
+        Args:
+            param_value:
+            assertion_value:
+
+        Returns: True or False
+        """
+        try:
+            if self == CompOp.BE_GREATER:
+                return param_value > assertion_value
+            elif self == CompOp.BE_SMALLER:
+                return param_value < assertion_value
+            elif self == CompOp.HAVE_VALUE:
+                return str(param_value).lower() == str(assertion_value).lower()
+            elif self == CompOp.BE_EQUAL:  # numbers or floats
+                return round(float(param_value), 2) == round(float(assertion_value), 2)
+        except Exception:
+            return False
