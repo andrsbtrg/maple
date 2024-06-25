@@ -19,7 +19,7 @@ def test_success_run():
 
 def test_error_run():
     some = "hello"
-    with pytest.raises(AttributeError):
+    with pytest.raises(ValueError):
         mp.run(some)  # type: ignore
 
 
