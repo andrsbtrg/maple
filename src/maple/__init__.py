@@ -332,9 +332,10 @@ def run(*specs: Callable):
     """
     for i, spec in enumerate(specs):
         if not callable(spec):
-            raise ValueError(
-                "parameter at position " + f"{i}" + " is not spec function."
+            print(
+                "Warning - parameter at position " + f"{i}" + " is not spec function."
             )
+            continue
         spec()
 
     # print results
