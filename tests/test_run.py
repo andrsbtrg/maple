@@ -1,5 +1,4 @@
 import maple as mp
-import pytest
 
 
 def test_success_run():
