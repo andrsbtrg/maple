@@ -9,14 +9,14 @@ from specklepy.objects import Base
 # maple imports
 from .base_extensions import flatten_base
 from .utils import print_results
-from .ops import property_equal, CompOp
+from .ops import ComparisonOps, property_equal, CompOp
 from .models import Result, Assertion
 
 
 # GLOBALS
 # TODO: Refactor to remove globals
 _test_cases: list[Result] = []  # Contains the results of the runs
-_current_object: Base = None
+_current_object: Base | None = None
 _stream_id: str = ""
 
 
@@ -61,7 +61,7 @@ def get_stream_id() -> str:
     return _stream_id
 
 
-def get_current_obj() -> Base:
+def get_current_obj() -> Base | None:
     """
     Get the current object specified with mp.init()
     """
@@ -85,6 +85,7 @@ def get_test_cases() -> list[Result]:
     global _test_cases
     return _test_cases
 
+
 # endof GLOBALS
 
 
@@ -92,7 +93,7 @@ class Chainable:
     def __init__(self, data):
         self.content = data
         self.selector = ""
-        self.assertion: Assertion = None
+        self.assertion: Assertion
 
     def _select_parameters_values(self, parameter_name: str) -> list[Any]:
         """
@@ -136,11 +137,12 @@ class Chainable:
         """
         objs = self.content
         if len(objs) == length:
-            self.assertion.set_passed('have.length')
+            self.assertion.set_passed("have.length")
         else:
-            self.assertion.set_failed('have.length')
+            self.assertion.set_failed("have.length")
         current = get_current_test_case()
         current.assertions.append(self.assertion)
+        return self
 
     def _should_have_param_value(self, comparer: CompOp, assertion_value: Any) -> Self:
         """
@@ -168,7 +170,7 @@ class Chainable:
         current.assertions.append(self.assertion)
         return self
 
-    def should(self, comparer: CompOp, assertion_value) -> Self:
+    def should(self, comparer: ComparisonOps, assertion_value) -> Self:
         """
         Assert something inside the Chainable
         Args:
@@ -242,8 +244,7 @@ class Chainable:
         current.selected[selector] = value
 
         selected = list(
-            filter(lambda obj: property_equal(
-                selector, value, obj), self.content)
+            filter(lambda obj: property_equal(selector, value, obj), self.content)
         )
         print("Got", len(selected))
         self.content = selected
@@ -294,8 +295,7 @@ def get(selector: str, value: str) -> Chainable:
 
     objs = list(flatten_base(speckle_obj))
 
-    selected = list(
-        filter(lambda obj: property_equal(selector, value, obj), objs))
+    selected = list(filter(lambda obj: property_equal(selector, value, obj), objs))
     print("Got", len(selected), value)
 
     return Chainable(selected)
@@ -318,8 +318,9 @@ def get_last_obj() -> Base:
     transport = ServerTransport(client=client, stream_id=stream_id)
 
     last_obj_id = client.commit.list(stream_id)[0].referencedObject
-    last_obj = operations.receive(
-        obj_id=last_obj_id, remote_transport=transport)
+    if not last_obj_id:
+        raise Exception("No object_id")
+    last_obj = operations.receive(obj_id=last_obj_id, remote_transport=transport)
     return last_obj
 
 

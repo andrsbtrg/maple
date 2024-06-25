@@ -1,7 +1,7 @@
 from .models import Result
 
 
-def print_results(test_cases: [Result]):
+def print_results(test_cases: list[Result]):
     """
     Prints results to std-out
     """

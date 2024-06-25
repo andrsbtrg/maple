@@ -15,15 +15,15 @@ class Assertion:
     """
 
     def __init__(self) -> None:
-        self.comparer: maple.CompOp = None
+        self.comparer: maple.CompOp
         self.value = None  # what will be compared to
-        self.passing = []
-        self.failing = []
+        self.passing: list[str] = []
+        self.failing: list[str] = []
 
-    def set_passed(self, obj_id):
+    def set_passed(self, obj_id: str):
         self.passing.append(obj_id)
 
-    def set_failed(self, obj_id):
+    def set_failed(self, obj_id: str):
         self.failing.append(obj_id)
 
     def passed(self) -> bool:
