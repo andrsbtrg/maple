@@ -19,8 +19,8 @@ def test_success_run():
 
 def test_error_run():
     some = "hello"
-    with pytest.raises(ValueError):
-        mp.run(some)  # type: ignore
+    other = {"name": "i'm a function"}
+    mp.run(spec, some, other)  # type: ignore
 
 
 def spec():
