@@ -1,9 +1,9 @@
 import maple as mp
+import pytest
 
 
-def test_init():
+def test_success_run():
     stream_id = "24fa0ed1c3"
-    # pass None to force mp to use the stream id to get object
     mp.stream(stream_id)
     mp.run(spec)
     assert mp._stream_id == stream_id
@@ -17,11 +17,15 @@ def test_init():
     return
 
 
+def test_error_run():
+    some = "hello"
+    with pytest.raises(ValueError):
+        mp.run(some)  # type: ignore
+
+
 def spec():
     mp.it("checks window height is greater than 2600 mm")
 
-    mp.get('category', 'Windows')\
-        .where('speckle_type',
-               'Objects.Other.Instance:Objects.Other.Revit.RevitInstance')\
-        .its('Height')\
-        .should('be.greater', 2600)  # assert
+    mp.get("category", "Windows").where(
+        "speckle_type", "Objects.Other.Instance:Objects.Other.Revit.RevitInstance"
+    ).its("Height").should("be.greater", 2600)  # assert
