@@ -93,7 +93,7 @@ class Chainable:
     def __init__(self, data):
         self.content = data
         self.selector = ""
-        self.assertion: Assertion
+        self.assertion: Assertion = Assertion()
 
     def _select_parameters_values(self, parameter_name: str) -> list[Any]:
         """
@@ -181,8 +181,6 @@ class Chainable:
         """
         print("Asserting - should:", comparer, assertion_value)
         comparer_op = CompOp(comparer)
-        if not self.assertion:
-            self.assertion = Assertion()
         self.assertion.value = assertion_value
         self.assertion.comparer = comparer_op
 
@@ -206,7 +204,6 @@ class Chainable:
         """
         print("Selecting", property)
         self.selector = property
-        self.assertion = Assertion()
 
         objs = self.content
         for obj in objs:
