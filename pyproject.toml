@@ -12,7 +12,7 @@ authors = [
 description = "A testing library for Speckle models"
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["specklepy"]
+dependencies = ["specklepy", "importlib-metadata"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
