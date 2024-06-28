@@ -37,4 +37,4 @@ def print_results(test_cases: list[Result]):
                 row.append(GREEN + "Passed" + ENDC)
             table.append(row)
     for row in table:
-        print("| {:^60} | {:<6} |".format(*row))
+        print("| {:<60} | {:<6} |".format(*row))
