@@ -62,5 +62,5 @@ class CompOp(StrEnum):
         except Exception:
             # log error
             print("Could not assert")
-        finally:
             return False
+        return False

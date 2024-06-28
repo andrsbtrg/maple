@@ -10,8 +10,8 @@ def test_success_run():
 
     assert test_case is not None
     assert len(test_case.assertions) == 1
-    assert not test_case.assertions[0].passed()
-    assert test_case.assertions[0].failed()
+    assert test_case.assertions[0].passed()
+    assert not test_case.assertions[0].failed()
 
     return
 
@@ -23,8 +23,9 @@ def test_error_run():
 
 
 def spec():
-    mp.it("checks window height is greater than 2600 mm")
+    min_height = 900
+    mp.it(f"checks window height is greater than {min_height} mm")
 
     mp.get("category", "Windows").where(
         "speckle_type", "Objects.Other.Instance:Objects.Other.Revit.RevitInstance"
-    ).its("Height").should("be.greater", 2600)  # assert
+    ).its("Height").should("be.greater", min_height)
