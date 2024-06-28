@@ -62,5 +62,5 @@ def spec_g():
 
 
 if __name__ == "__main__":
-    mp.set_logging(False)
+    mp.set_logging(True)
     main()

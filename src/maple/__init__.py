@@ -361,8 +361,9 @@ def log_to_stdout(*args):
 
 def print_info(specs):
     from importlib_metadata import version
+    from .utils import print_title
 
-    print("=================== Test session ======================")
+    print_title("Test session")
 
     v = version("maple-spec")
     print("Maple -", v)
