@@ -1,11 +1,11 @@
+### Reference to related issue
+Related Issue #
+
 ### What was added/changed?
-- ...
   
 ### Why was it added/changed?
-- ...
 
 ### Technical implementation:
-- ...
 
 ### Acceptance criteria
 - [ ] ...
