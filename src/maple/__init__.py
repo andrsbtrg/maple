@@ -18,6 +18,7 @@ from .models import Result, Assertion
 _test_cases: list[Result] = []  # Contains the results of the runs
 _current_object: Base | None = None
 _stream_id: str = ""
+_log_out: bool = True
 
 
 def init(obj: Base) -> None:
@@ -27,6 +28,17 @@ def init(obj: Base) -> None:
     global _current_object
     _current_object = obj
     return
+
+
+def set_logging(f: bool) -> None:
+    """
+    Set log to std out. Default is True
+
+    Args:
+        f: bool
+    """
+    global _log_out
+    _log_out = f
 
 
 def stream(id: str) -> None:
@@ -179,7 +191,7 @@ class Chainable:
         Raises: ValueError if comparer is not a defined CompOp
         Returns: Chainable
         """
-        print("Asserting - should:", comparer, assertion_value)
+        log_to_stdout("Asserting - should:", comparer, assertion_value)
         comparer_op = CompOp(comparer)
         self.assertion.value = assertion_value
         self.assertion.comparer = comparer_op
@@ -202,7 +214,7 @@ class Chainable:
             AttributeError: if the parameter name does not match in the
             inner object selected with get
         """
-        print("Selecting", property)
+        log_to_stdout("Selecting", property)
         self.selector = property
 
         objs = self.content
@@ -236,14 +248,14 @@ class Chainable:
 
         Returns: Chainable
         """
-        print("Filtering by:", selector, value)
+        log_to_stdout("Filtering by:", selector, value)
         current = get_current_test_case()
         current.selected[selector] = value
 
         selected = list(
             filter(lambda obj: property_equal(selector, value, obj), self.content)
         )
-        print("Got", len(selected))
+        log_to_stdout("Got", len(selected))
         self.content = selected
         return self
 
@@ -258,8 +270,8 @@ def it(spec_name: str):
 
     Returns: None
     """
-    print("-------------------------------------------------------")
-    print("Running test:", spec_name)
+    log_to_stdout("-------------------------------------------------------")
+    log_to_stdout("Running test:", spec_name)
     get_test_cases().append(Result(spec_name))
 
 
@@ -280,7 +292,7 @@ def get(selector: str, value: str) -> Chainable:
         Exception: If it was not possible to query a speckle object
     """
 
-    print("Getting", selector, value)
+    log_to_stdout("Getting", selector, value)
     current_test = get_current_test_case()
     current_test.selected[selector] = value
 
@@ -293,7 +305,7 @@ def get(selector: str, value: str) -> Chainable:
     objs = list(flatten_base(speckle_obj))
 
     selected = list(filter(lambda obj: property_equal(selector, value, obj), objs))
-    print("Got", len(selected), value)
+    log_to_stdout("Got", len(selected), value)
 
     return Chainable(selected)
 
@@ -327,6 +339,8 @@ def run(*specs: Callable):
     Args:
         *specs: Callable
     """
+    print_info(specs)
+
     for i, spec in enumerate(specs):
         if not callable(spec):
             print(
@@ -337,3 +351,21 @@ def run(*specs: Callable):
 
     # print results
     print_results(get_test_cases())
+
+
+def log_to_stdout(*args):
+    global _log_out
+    if _log_out:
+        print("INFO:", *args)
+
+
+def print_info(specs):
+    from importlib_metadata import version
+    from .utils import print_title
+
+    print_title("Test session")
+
+    v = version("maple-spec")
+    print("Maple -", v)
+    print("collected", len(specs), "specs")
+    print()
