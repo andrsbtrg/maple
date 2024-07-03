@@ -81,6 +81,21 @@ def get_current_obj() -> Base | None:
     return _current_object
 
 
+def set_current_obj(obj: Base) -> None:
+    """
+    Caches a speckle object in the global _current_object
+    so it can be reused in the next tests
+
+    Args:
+        obj: a speckle Base object
+
+    Returns: None
+    """
+    global _current_object
+    _current_object = obj
+    return
+
+
 def get_current_test_case() -> Result:
     """
     Get the current test case
@@ -314,6 +329,7 @@ def get_last_obj() -> Base:
     """
     Gets the last object for the specified stream_id
     """
+    log_to_stdout("Getting object from speckle")
     client = SpeckleClient(host="https://latest.speckle.systems")
     # authenticate the client with a token
     account = get_default_account()
@@ -330,6 +346,9 @@ def get_last_obj() -> Base:
     if not last_obj_id:
         raise Exception("No object_id")
     last_obj = operations.receive(obj_id=last_obj_id, remote_transport=transport)
+
+    # cache the current obj
+    set_current_obj(last_obj)
     return last_obj
 
 
