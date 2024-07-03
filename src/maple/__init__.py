@@ -23,7 +23,13 @@ _log_out: bool = True
 
 def init(obj: Base) -> None:
     """
-    Sets the obj as current object
+    Caches the speckle object obj in the global _current_object
+    so it can be reused in the next tests
+
+    Args:
+        obj: a speckle Base object
+
+    Returns: None
     """
     global _current_object
     _current_object = obj
@@ -79,21 +85,6 @@ def get_current_obj() -> Base | None:
     """
     global _current_object
     return _current_object
-
-
-def set_current_obj(obj: Base) -> None:
-    """
-    Caches a speckle object in the global _current_object
-    so it can be reused in the next tests
-
-    Args:
-        obj: a speckle Base object
-
-    Returns: None
-    """
-    global _current_object
-    _current_object = obj
-    return
 
 
 def get_current_test_case() -> Result:
@@ -270,7 +261,7 @@ class Chainable:
         selected = list(
             filter(lambda obj: property_equal(selector, value, obj), self.content)
         )
-        log_to_stdout("Got", len(selected))
+        log_to_stdout("Elements after filter:", len(selected))
         self.content = selected
         return self
 
@@ -348,7 +339,7 @@ def get_last_obj() -> Base:
     last_obj = operations.receive(obj_id=last_obj_id, remote_transport=transport)
 
     # cache the current obj
-    set_current_obj(last_obj)
+    init(last_obj)
     return last_obj
 
 
