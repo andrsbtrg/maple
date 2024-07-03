@@ -22,6 +22,19 @@ def test_error_run():
     mp.run(spec, some, other)  # type: ignore
 
 
+def test_multiple_streams():
+    stream_id = "24fa0ed1c3"
+    mp.stream(stream_id)
+    mp.run(spec)
+
+    # We set the stream id to another, it doesn't
+    # matter that is not valid since we will not use it to query
+    mp.stream("other")
+
+    # Setting the stream should reset the current object
+    assert mp.get_current_obj() is None
+
+
 def spec():
     min_height = 900
     mp.it(f"checks window height is greater than {min_height} mm")

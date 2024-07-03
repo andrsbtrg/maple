@@ -23,7 +23,13 @@ _log_out: bool = True
 
 def init(obj: Base) -> None:
     """
-    Sets the obj as current object
+    Caches the speckle object obj in the global _current_object
+    so it can be reused in the next tests
+
+    Args:
+        obj: a speckle Base object
+
+    Returns: None
     """
     global _current_object
     _current_object = obj
@@ -43,10 +49,17 @@ def set_logging(f: bool) -> None:
 
 def stream(id: str) -> None:
     """
-    Set the stream_id
+    Sets the current stream_id to be used to query the base object
+
+    Args:
+        id: a speckle stream (project) id
+
+    Returns: None
     """
     global _stream_id
     _stream_id = id
+    global _current_object
+    _current_object = None
     return
 
 
@@ -255,7 +268,7 @@ class Chainable:
         selected = list(
             filter(lambda obj: property_equal(selector, value, obj), self.content)
         )
-        log_to_stdout("Got", len(selected))
+        log_to_stdout("Elements after filter:", len(selected))
         self.content = selected
         return self
 
@@ -314,6 +327,7 @@ def get_last_obj() -> Base:
     """
     Gets the last object for the specified stream_id
     """
+    log_to_stdout("Getting object from speckle")
     client = SpeckleClient(host="https://latest.speckle.systems")
     # authenticate the client with a token
     account = get_default_account()
@@ -330,6 +344,9 @@ def get_last_obj() -> Base:
     if not last_obj_id:
         raise Exception("No object_id")
     last_obj = operations.receive(obj_id=last_obj_id, remote_transport=transport)
+
+    # cache the current obj
+    init(last_obj)
     return last_obj
 
 
