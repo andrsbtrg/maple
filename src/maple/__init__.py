@@ -49,10 +49,17 @@ def set_logging(f: bool) -> None:
 
 def stream(id: str) -> None:
     """
-    Set the stream_id
+    Sets the current stream_id to be used to query the base object
+
+    Args:
+        id: a speckle stream (project) id
+
+    Returns: None
     """
     global _stream_id
     _stream_id = id
+    global _current_object
+    _current_object = None
     return
 
 
