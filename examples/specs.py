@@ -13,7 +13,9 @@ import maple as mp
 def main():
     stream_id = "24fa0ed1c3"
     mp.stream(stream_id)
+    mp.set_logging(True)
     mp.run(spec_a, spec_b, spec_c, spec_d, spec_e, spec_f, spec_g)
+    mp.generate_report("/home/andres/Documents/")
 
 
 def spec_a():
@@ -71,5 +73,4 @@ def spec_g():
 
 
 if __name__ == "__main__":
-    mp.set_logging(True)
     main()

@@ -4,11 +4,12 @@ import sys
 
 path_root = Path(__file__).parents[1]
 sys.path.append(str(path_root) + "/src")
-print(sys.path)
 # end
 
+from maple.models import Result
 from maple.report import HtmlReport
 
-report = HtmlReport([""])
+results = [Result("a test case")]
+report = HtmlReport(results)
 
 report.create("")

@@ -11,6 +11,7 @@ from .base_extensions import flatten_base
 from .utils import print_results
 from .ops import ComparisonOps, property_equal, CompOp
 from .models import Result, Assertion
+from .report import HtmlReport
 
 
 # GLOBALS
@@ -369,3 +370,9 @@ def print_info(specs):
     print("Maple -", v)
     print("collected", len(specs), "specs")
     print()
+
+
+def generate_report(output_path: str):
+    results = get_test_cases()
+    report = HtmlReport(results)
+    report.create(output_path)
