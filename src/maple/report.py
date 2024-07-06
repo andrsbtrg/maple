@@ -1,3 +1,5 @@
+from time import strftime
+import os
 from .models import Result
 from jinja2 import Environment, FileSystemLoader
 
@@ -5,11 +7,14 @@ from jinja2 import Environment, FileSystemLoader
 class HtmlReport:
     def __init__(self, results: list[Result]) -> None:
         self.results = results
+        self.template_file = "report.html"
         return
 
     def create(self, output_path: str) -> None:
         """
-        Generate a HTML report at the output_path
+        Generates a HTML report at the output_path directory.
+
+        Filename is `maple_report_YYYY-mm-dd_HH-MM-ss`
 
         Args:
             output_path (str): Destination directory
@@ -17,10 +22,13 @@ class HtmlReport:
 
         file_loader = FileSystemLoader("src/maple/templates")
         env = Environment(loader=file_loader)
-        template = env.get_template("report.html")
+        template = env.get_template(self.template_file)
 
         output = template.render(results=self.results)
-        with open(output_path + "report.html", "a+") as file:
+        time = strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"maple_report_{time}.html"
+        output_path = os.path.join(output_path, filename)
+        with open(output_path, "w") as file:
             file.write(output)
 
         return
