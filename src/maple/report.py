@@ -10,7 +10,7 @@ class HtmlReport:
         self.template_file = "report.html"
         return
 
-    def create(self, output_path: str) -> None:
+    def create(self, output_path: str) -> int:
         """
         Generates a HTML report at the output_path directory.
 
@@ -18,6 +18,8 @@ class HtmlReport:
 
         Args:
             output_path (str): Destination directory
+        Returns:
+            int: number of bytes written
         """
 
         file_loader = FileSystemLoader("src/maple/templates")
@@ -29,6 +31,4 @@ class HtmlReport:
         filename = f"maple_report_{time}.html"
         output_path = os.path.join(output_path, filename)
         with open(output_path, "w") as file:
-            file.write(output)
-
-        return
+            return file.write(output)
