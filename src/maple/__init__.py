@@ -149,6 +149,7 @@ class Chainable:
 
         """
         objs = self.content
+        self.assertion.selector = "Collection"
         if len(objs) == length:
             self.assertion.set_passed("have.length")
         else:
@@ -217,6 +218,7 @@ class Chainable:
         """
         log_to_stdout("Selecting", property)
         self.selector = property
+        self.assertion.selector = property
 
         objs = self.content
         for obj in objs:

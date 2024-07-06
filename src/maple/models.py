@@ -19,6 +19,7 @@ class Assertion:
         self.value = None  # what will be compared to
         self.passing: list[str] = []
         self.failing: list[str] = []
+        self.selector = ""
 
     def set_passed(self, obj_id: str):
         self.passing.append(obj_id)
