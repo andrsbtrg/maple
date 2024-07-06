@@ -373,6 +373,13 @@ def print_info(specs):
 
 
 def generate_report(output_path: str):
+    """
+    Generats a report file with the test cases after
+    mp.run()
+
+    Args:
+        output_path: directory to save reports
+    """
     results = get_test_cases()
     report = HtmlReport(results)
     report.create(output_path)
