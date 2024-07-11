@@ -383,5 +383,7 @@ def generate_report(output_path: str):
         output_path: directory to save reports
     """
     results = get_test_cases()
+    if len(results) == 0:
+        raise Exception("mp.run must be called before generating report")
     report = HtmlReport(results)
     report.create(output_path)
