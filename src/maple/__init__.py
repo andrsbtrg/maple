@@ -11,6 +11,7 @@ from .base_extensions import flatten_base
 from .utils import print_results
 from .ops import ComparisonOps, property_equal, CompOp
 from .models import Result, Assertion
+from .report import HtmlReport
 
 
 # GLOBALS
@@ -161,6 +162,7 @@ class Chainable:
 
         """
         objs = self.content
+        self.assertion.selector = "Collection"
         if len(objs) == length:
             self.assertion.set_passed("have.length")
         else:
@@ -229,6 +231,7 @@ class Chainable:
         """
         log_to_stdout("Selecting", property)
         self.selector = property
+        self.assertion.selector = property
 
         objs = self.content
         for obj in objs:
@@ -386,3 +389,18 @@ def print_info(specs):
     print("Maple -", v)
     print("collected", len(specs), "specs")
     print()
+
+
+def generate_report(output_path: str):
+    """
+    Generats a report file with the test cases after
+    mp.run()
+
+    Args:
+        output_path: directory to save reports
+    """
+    results = get_test_cases()
+    if len(results) == 0:
+        raise Exception("mp.run must be called before generating report")
+    report = HtmlReport(results)
+    report.create(output_path)

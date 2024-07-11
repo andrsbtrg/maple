@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: "JetBrains Mono", monospace;
+      font-optical-sizing: auto;
+      font-weight: 400;
+      font-size: 0.85rem;
+      font-style: normal;
+      max-width: 33rem;
+      margin: auto;
+      padding: 1rem;
+    }
+
+    table,
+    th,
+    td {
+      border: 1px solid;
+      border-collapse: collapse;
+    }
+
+    .failed {
+      color: red;
+    }
+
+    .passed {
+      color: green;
+    }
+
+    p {
+      padding: 0px;
+      margin: 0.2rem;
+    }
+  </style>
+  <title>Document</title>
+</head>
+
+<body>
+  <h1>Summary</h1>
+  <table>
+    <tr>
+      <th>Spec name</th>
+      <th>Result</th>
+    </tr>
+    {% for result in results %}
+    {% for assertion in result.assertions %}
+    <tr>
+      <td>{{ result.spec_name }}</td>
+      {% if assertion.passed() %}
+      <td>
+        <p class="passed">Passed </p>
+      </td>
+      {% else %}
+      <td>
+        <p class="failed">Failed</p>
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    {% endfor %}
+  </table>
+  <br />
+  <h1>Details</h1>
+  {% for result in results %}
+  {% for assertion in result.assertions %}
+  <h3>Test case: {{ result.spec_name }} </h3>
+  {% if assertion.passed() %}
+  <p class="passed">Passed </p>
+  {% else %}
+  <p class="failed">Failed</p>
+  {% endif %}
+  <p>Asserting: {{ assertion.selector }} must {{ assertion.comparer }} {{ assertion.value }}</p>
+  <p>Selected: {{ result.selected }}</p>
+  <p> {{ (assertion.passing | length) }} Elements passing - {{ (assertion.failing | length) }} Elements failing</p>
+  {% endfor %}
+  {% endfor %}
+</body>
+
+</html>
