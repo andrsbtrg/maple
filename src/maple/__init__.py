@@ -51,6 +51,9 @@ def set_logging(f: bool) -> None:
     _log_out = f
 
 
+@deprecated(
+    reason="Starting with maple 0.1 please use mp.init_model to specify a project and model id."
+)
 def stream(id: str) -> None:
     """
     Sets the current stream_id to be used to query the base object
