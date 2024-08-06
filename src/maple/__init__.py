@@ -173,6 +173,17 @@ class Chainable:
         """
         parameter_values = []
         objs = self.content
+        # check on base object
+        for obj in objs:
+            prop = getattr(obj, parameter_name)
+            if not prop:
+                break
+            parameter_values.append(prop)
+
+        if len(parameter_values) > 0:
+            return parameter_values
+
+        # check in parameters
         for obj in objs:
             parameters = getattr(obj, "parameters")
             if parameters is None:
@@ -270,6 +281,14 @@ class Chainable:
         self.assertion.selector = property
 
         objs = self.content
+        # check on base object
+        for obj in objs:
+            props = getattr(obj, property)
+            if not props:
+                break
+            return self
+
+        # check inside parameters
         for obj in objs:
             parameters = getattr(obj, "parameters")
             if parameters is None:
