@@ -175,7 +175,7 @@ class Chainable:
         objs = self.content
         # check on base object
         for obj in objs:
-            prop = getattr(obj, parameter_name)
+            prop = getattr(obj, parameter_name, None)
             if not prop:
                 break
             parameter_values.append(prop)
@@ -283,7 +283,7 @@ class Chainable:
         objs = self.content
         # check on base object
         for obj in objs:
-            props = getattr(obj, property)
+            props = getattr(obj, property, None)
             if not props:
                 break
             return self
