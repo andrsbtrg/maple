@@ -3,7 +3,7 @@ import maple as mp
 
 def test_success_run():
     stream_id = "24fa0ed1c3"
-    mp.stream(stream_id)
+    mp.init_model(project_id=stream_id, model_id="2696b4a381")
     mp.run(spec)
     assert mp._stream_id == stream_id
     test_case = mp.get_current_test_case()
@@ -24,12 +24,12 @@ def test_error_run():
 
 def test_multiple_streams():
     stream_id = "24fa0ed1c3"
-    mp.stream(stream_id)
+    mp.init_model(project_id=stream_id, model_id="2696b4a381")
     mp.run(spec)
 
     # We set the stream id to another, it doesn't
     # matter that is not valid since we will not use it to query
-    mp.stream("other")
+    mp.init_model("other", "rehto")
 
     # Setting the stream should reset the current object
     assert mp.get_current_obj() is None
