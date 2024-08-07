@@ -1,3 +1,4 @@
+from deprecated import deprecated
 from typing_extensions import Self, Callable
 from typing import Any
 from specklepy.api.client import SpeckleClient
@@ -5,6 +6,7 @@ from specklepy.api.credentials import get_default_account
 from specklepy.api import operations
 from specklepy.transports.server.server import ServerTransport
 from specklepy.objects import Base
+from specklepy.core.api.models import Branch
 
 # maple imports
 from .base_extensions import flatten_base
@@ -19,6 +21,7 @@ from .report import HtmlReport
 _test_cases: list[Result] = []  # Contains the results of the runs
 _current_object: Base | None = None
 _stream_id: str = ""
+_model_id: str = ""
 _log_out: bool = True
 
 
@@ -48,6 +51,9 @@ def set_logging(f: bool) -> None:
     _log_out = f
 
 
+@deprecated(
+    reason="Starting with maple 0.1 please use mp.init_model to specify a project and model id."
+)
 def stream(id: str) -> None:
     """
     Sets the current stream_id to be used to query the base object
@@ -59,6 +65,26 @@ def stream(id: str) -> None:
     """
     global _stream_id
     _stream_id = id
+    global _current_object
+    _current_object = None
+    return
+
+
+def init_model(project_id: str, model_id: str) -> None:
+    """
+    Sets the global variables project id and model id for the
+    current test until reset.
+
+
+    Args:
+        project_id: a project id
+        model_id: the model id to test
+
+    """
+    global _stream_id
+    _stream_id = project_id
+    global _model_id
+    _model_id = model_id
     global _current_object
     _current_object = None
     return
@@ -85,6 +111,16 @@ def get_stream_id() -> str:
     if _stream_id == "":
         raise Exception("Please provide a Stream id using mp.stream()")
     return _stream_id
+
+
+def get_model_id() -> str:
+    """
+    Gets the Model id provided with mp.init_model
+    """
+    global _model_id
+    if _model_id == "":
+        raise Exception("Please provide a Model Id to test using mp.init_model()")
+    return _model_id
 
 
 def get_current_obj() -> Base | None:
@@ -137,6 +173,17 @@ class Chainable:
         """
         parameter_values = []
         objs = self.content
+        # check on base object
+        for obj in objs:
+            prop = getattr(obj, parameter_name, None)
+            if not prop:
+                break
+            parameter_values.append(prop)
+
+        if len(parameter_values) > 0:
+            return parameter_values
+
+        # check in parameters
         for obj in objs:
             parameters = getattr(obj, "parameters")
             if parameters is None:
@@ -234,6 +281,14 @@ class Chainable:
         self.assertion.selector = property
 
         objs = self.content
+        # check on base object
+        for obj in objs:
+            props = getattr(obj, property, None)
+            if not props:
+                break
+            return self
+
+        # check inside parameters
         for obj in objs:
             parameters = getattr(obj, "parameters")
             if parameters is None:
@@ -341,9 +396,25 @@ def get_last_obj() -> Base:
         client.authenticate_with_token(token)
 
     stream_id = get_stream_id()
+    model_id = get_model_id()
     transport = ServerTransport(client=client, stream_id=stream_id)
 
-    last_obj_id = client.commit.list(stream_id)[0].referencedObject
+    branches: list[Branch] = client.branch.list(stream_id)
+    if len(branches) == 0:
+        raise Exception("Project contains no models.")
+    if type(branches[0]) is not Branch:
+        raise Exception("Expected list of branches")
+    branch = list(filter(lambda branch: branch.id == model_id, branches))
+
+    if len(branch) == 0:
+        raise Exception("Model id was not found.")
+
+    versions = branch[0].commits
+    if versions is None:
+        raise Exception("Current model has no versions.")
+
+    last_obj_id = versions.items[0].referencedObject
+
     if not last_obj_id:
         raise Exception("No object_id")
     last_obj = operations.receive(obj_id=last_obj_id, remote_transport=transport)
