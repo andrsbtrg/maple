@@ -81,16 +81,21 @@ def init_model(project_id: str, model_id: str) -> None:
         model_id: the model id to test
 
     """
+    # set the model and project id
     global _stream_id
     _stream_id = project_id
     global _model_id
     _model_id = model_id
+    # clear the current object
     global _current_object
     _current_object = None
+    # clear previous test runs
+    global _test_cases
+    _test_cases.clear()
     return
 
 
-def get_token():
+def get_token() -> str:
     """
     Get the token to authenticate with Speckle.
     The token should be under the env variable 'SPECKLE_TOKEN'
@@ -131,11 +136,13 @@ def get_current_obj() -> Base | None:
     return _current_object
 
 
-def get_current_test_case() -> Result:
+def get_current_test_case() -> Result | None:
     """
     Get the current test case
     """
     global _test_cases
+    if len(_test_cases) < 1:
+        return None
     current = _test_cases[-1]
     return current
 
@@ -215,6 +222,8 @@ class Chainable:
         else:
             self.assertion.set_failed("have.length")
         current = get_current_test_case()
+        if current is None:
+            raise Exception("Expected current test case not to be None")
         current.assertions.append(self.assertion)
         return self
 
@@ -241,7 +250,10 @@ class Chainable:
                 self.assertion.set_failed(objs[i].id)
 
         current = get_current_test_case()
+        if current is None:
+            raise Exception("Expected current test case not to be None")
         current.assertions.append(self.assertion)
+
         return self
 
     def should(self, comparer: ComparisonOps, assertion_value) -> Self:
@@ -321,6 +333,8 @@ class Chainable:
         """
         log_to_stdout("Filtering by:", selector, value)
         current = get_current_test_case()
+        if current is None:
+            raise Exception("Expected current test case not to be None")
         current.selected[selector] = value
 
         selected = list(
@@ -365,6 +379,8 @@ def get(selector: str, value: str) -> Chainable:
 
     log_to_stdout("Getting", selector, value)
     current_test = get_current_test_case()
+    if current_test is None:
+        raise Exception("Expected current test case not to be None")
     current_test.selected[selector] = value
 
     speckle_obj = get_current_obj()
