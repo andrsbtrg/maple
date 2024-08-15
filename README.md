@@ -16,6 +16,8 @@ See [Maple-Automate-CI](https://github.com/Gizemdem/Mapple-CI-Pipeline) to check
 
 ### Get started
 
+For a more detailed guide check out [Getting started](https://github.com/andrsbtrg/maple/wiki/Getting-Started)
+
 Install the library from PyPi
 
 ```sh
@@ -37,8 +39,8 @@ def spec_a():
         .its('Height')\
         .should('be.greater', 2600)
 
-# Use the stream id of one of your projects
-mp.stream("streamid")
+# Use the project and model id of one of your projects
+mp.init_model(project_id="24fa0ed1c3", model_id="2696b4a381")
 mp.run(spec_a)
 ```
 For this to work out of the box, you should have the [Speckle Manager](https://speckle.systems/download/)
