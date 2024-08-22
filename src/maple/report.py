@@ -1,7 +1,7 @@
 from time import strftime
 import os
 from .models import Result
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, PackageLoader
 
 
 class HtmlReport:
@@ -22,7 +22,7 @@ class HtmlReport:
             int: number of bytes written
         """
 
-        file_loader = FileSystemLoader("src/maple/templates")
+        file_loader = PackageLoader("maple")
         env = Environment(loader=file_loader)
         template = env.get_template(self.template_file)
 
