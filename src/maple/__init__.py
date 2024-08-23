@@ -478,10 +478,13 @@ def print_info(specs):
     print()
 
 
-def generate_report(output_path: str):
+def generate_report(output_path: str) -> str:
     """
     Generats a report file with the test cases after
     mp.run()
+
+    Returns:
+        The path of the file created
 
     Args:
         output_path: directory to save reports
@@ -490,4 +493,4 @@ def generate_report(output_path: str):
     if len(results) == 0:
         raise Exception("mp.run must be called before generating report")
     report = HtmlReport(results)
-    report.create(output_path)
+    return report.create(output_path)
