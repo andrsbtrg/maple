@@ -1,7 +1,7 @@
 from time import strftime
 import os
 from .models import Result
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, PackageLoader
 
 
 class HtmlReport:
@@ -10,7 +10,7 @@ class HtmlReport:
         self.template_file = "report.html"
         return
 
-    def create(self, output_path: str) -> int:
+    def create(self, output_path: str) -> str:
         """
         Generates a HTML report at the output_path directory.
 
@@ -22,7 +22,7 @@ class HtmlReport:
             int: number of bytes written
         """
 
-        file_loader = FileSystemLoader("src/maple/templates")
+        file_loader = PackageLoader("maple")
         env = Environment(loader=file_loader)
         template = env.get_template(self.template_file)
 
@@ -31,4 +31,5 @@ class HtmlReport:
         filename = f"maple_report_{time}.html"
         output_path = os.path.join(output_path, filename)
         with open(output_path, "w") as file:
-            return file.write(output)
+            file.write(output)
+        return output_path
