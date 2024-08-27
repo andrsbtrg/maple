@@ -480,17 +480,21 @@ def print_info(specs):
 
 def generate_report(output_path: str) -> str:
     """
-    Generats a report file with the test cases after
+    Generats a report file with the test cases after.
     mp.run()
 
     Returns:
         The path of the file created
 
     Args:
-        output_path: directory to save reports
+        output_path: directory to save reports. It must be an
+        existing directory.
     """
+    log_to_stdout("Creating report")
     results = get_test_cases()
     if len(results) == 0:
         raise Exception("mp.run must be called before generating report")
     report = HtmlReport(results)
-    return report.create(output_path)
+    file_created = report.create(output_path)
+    log_to_stdout("Report created on", file_created)
+    return file_created
