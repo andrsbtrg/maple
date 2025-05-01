@@ -7,6 +7,7 @@ from specklepy.api import operations
 from specklepy.transports.server.server import ServerTransport
 from specklepy.objects import Base
 from specklepy.core.api.models import Branch
+from os import getenv
 
 # maple imports
 from .base_extensions import flatten_base
@@ -100,9 +101,8 @@ def get_token() -> str:
     Get the token to authenticate with Speckle.
     The token should be under the env variable 'SPECKLE_TOKEN'
     """
-    import os
 
-    token = os.getenv("SPECKLE_TOKEN")
+    token = getenv("SPECKLE_TOKEN")
     if token is None:
         raise Exception("Expected `SPECKLE_TOKEN` env variable to be set")
     return token
@@ -402,7 +402,10 @@ def get_last_obj() -> Base:
     Gets the last object for the specified stream_id
     """
     log_to_stdout("Getting object from speckle")
-    client = SpeckleClient(host="https://latest.speckle.systems")
+    host = getenv("SPECKLE_HOST")
+    if not host:
+        host = "https://app.speckle.systems"
+    client = SpeckleClient(host)
     # authenticate the client with a token
     account = get_default_account()
     if account:

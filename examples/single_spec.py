@@ -3,7 +3,7 @@ import maple as mp
 
 
 def main():
-    mp.init_model(project_id="62bd771c0e", model_id="28e03dc3c7")
+    mp.init_model(project_id="1471fed2c0", model_id="53db0711db")
     mp.set_logging(True)
     mp.run(test_check_door_height)
     mp.generate_report(output_path=".")
