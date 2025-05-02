@@ -7,7 +7,7 @@ def main():
     mp.init_model(project_id=stream_id, model_id="2696b4a381")
     mp.set_logging(True)
     mp.run(spec_a, spec_b, spec_c, spec_d, spec_e, spec_f, spec_g)
-    mp.generate_report(".")
+    mp.generate_report("/tmp/")
 
 
 def spec_a():

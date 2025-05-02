@@ -1,7 +1,7 @@
 from deprecated import deprecated
 from typing_extensions import Self, Callable
 from typing import Any
-from specklepy.api.client import SpeckleClient
+from specklepy.api.client import Account, SpeckleClient
 from specklepy.api.credentials import get_default_account
 from specklepy.api import operations
 from specklepy.transports.server.server import ServerTransport
@@ -96,15 +96,13 @@ def init_model(project_id: str, model_id: str) -> None:
     return
 
 
-def get_token() -> str:
+def get_token() -> str | None:
     """
     Get the token to authenticate with Speckle.
     The token should be under the env variable 'SPECKLE_TOKEN'
     """
 
     token = getenv("SPECKLE_TOKEN")
-    if token is None:
-        raise Exception("Expected `SPECKLE_TOKEN` env variable to be set")
     return token
 
 
@@ -405,14 +403,19 @@ def get_last_obj() -> Base:
     host = getenv("SPECKLE_HOST")
     if not host:
         host = "https://app.speckle.systems"
+    log_to_stdout("Using Speckle host:", host)
     client = SpeckleClient(host)
     # authenticate the client with a token
     account = get_default_account()
-    if account:
+    token = get_token()
+    if token:
+        log_to_stdout("Auth with token")
+        client.authenticate_with_token(token)
+    elif account and account_match_host(account, host):
+        log_to_stdout("Auth with default account")
         client.authenticate_with_account(account)
     else:
-        token = get_token()
-        client.authenticate_with_token(token)
+        log_to_stdout("No auth present")
 
     stream_id = get_stream_id()
     model_id = get_model_id()
@@ -501,3 +504,11 @@ def generate_report(output_path: str) -> str:
     file_created = report.create(output_path)
     log_to_stdout("Report created on", file_created)
     return file_created
+
+
+def account_match_host(account: Account, host: str) -> bool:
+    url = account.serverInfo.url
+    host_url = host.replace("https://", "")
+    host_url = host_url.replace("/", "")
+    return url == host_url
+    pass

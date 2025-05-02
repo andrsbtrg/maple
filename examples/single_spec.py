@@ -6,7 +6,7 @@ def main():
     mp.init_model(project_id="1471fed2c0", model_id="53db0711db")
     mp.set_logging(True)
     mp.run(test_check_door_height)
-    mp.generate_report(output_path=".")
+    mp.generate_report(output_path="/tmp/")
 
 
 def test_check_door_height():
