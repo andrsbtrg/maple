@@ -58,3 +58,35 @@ Finally run the file with python like so:
 python main.py
 ```
 
+## Development guide
+
+Create a development virtual environment:
+
+```sh
+python -m venv venv
+source ./venv/bin/activate
+```
+
+Install the dev dependencies
+
+```sh
+pip install pytest
+```
+
+### Testing
+
+Run `pytest`
+
+### Building
+
+Ensure `build` is installed:
+
+```sh
+python -m pip install --upgrade build
+```
+
+To build a wheel run:
+
+```sh
+python -m build
+```
