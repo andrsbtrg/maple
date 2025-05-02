@@ -1,4 +1,7 @@
 import maple as mp
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def test_success_run():

@@ -1,4 +1,8 @@
 import maple as mp
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def test_multiple_runs():
