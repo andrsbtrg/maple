@@ -7,6 +7,8 @@ from specklepy.api import operations
 from specklepy.transports.server.server import ServerTransport
 from specklepy.objects import Base
 from specklepy.core.api.models import Branch
+from specklepy.core.api.models.current import Version
+from specklepy.core.api.models.current import ModelWithVersions
 from os import getenv
 
 # maple imports
@@ -421,21 +423,19 @@ def get_last_obj() -> Base:
     model_id = get_model_id()
     transport = ServerTransport(client=client, stream_id=stream_id)
 
-    branches: list[Branch] = client.branch.list(stream_id)
-    if len(branches) == 0:
-        raise Exception("Project contains no models.")
-    if type(branches[0]) is not Branch:
-        raise Exception("Expected list of branches")
-    branch = list(filter(lambda branch: branch.id == model_id, branches))
+    model: ModelWithVersions = client.model.get_with_versions(
+        project_id=stream_id, model_id=model_id
+    )
 
-    if len(branch) == 0:
-        raise Exception("Model id was not found.")
+    if not model:
+        raise Exception("Could not get models")
 
-    versions = branch[0].commits
-    if versions is None:
-        raise Exception("Current model has no versions.")
-
-    last_obj_id = versions.items[0].referencedObject
+    versions = model.versions.items
+    if len(versions) == 0:
+        raise Exception("Model contains no versions.")
+    if type(versions[0]) is not Version:
+        raise Exception("Type of element is not Model: ", type(versions[0]))
+    last_obj_id = versions[0].referencedObject
 
     if not last_obj_id:
         raise Exception("No object_id")
