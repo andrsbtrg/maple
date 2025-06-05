@@ -21,6 +21,13 @@ class Assertion:
         self.failing: list[str] = []
         self.selector = ""
 
+    def get_description(self):
+        return {
+            "selector": self.selector,
+            "comparer": self.comparer,
+            "value": self.value,
+        }
+
     def set_passed(self, obj_id: str):
         self.passing.append(obj_id)
 

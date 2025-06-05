@@ -1,6 +1,6 @@
 from deprecated import deprecated
 from typing_extensions import Self, Callable
-from typing import Any
+from typing import Dict, Any, Literal, Union
 from specklepy.api.client import Account, SpeckleClient
 from specklepy.api.credentials import get_default_account
 from specklepy.api import operations
@@ -10,6 +10,8 @@ from specklepy.core.api.models import Branch
 from specklepy.core.api.models.current import Version
 from specklepy.core.api.models.current import ModelWithVersions
 from os import getenv
+
+type Status = Literal["pass", "fail"]
 
 # maple imports
 from .base_extensions import flatten_base
@@ -153,6 +155,38 @@ def get_test_cases() -> list[Result]:
     """
     global _test_cases
     return _test_cases
+
+
+def get_results() -> list[Any]:
+    """
+    Gets the list of Results
+    """
+    results = get_test_cases()
+
+    total_results = []
+    for result in results:
+        result_per_elem: Dict[str, Status] = {}
+        select = ""
+        for selector in result.selected.keys():
+            select += f"{selector} = {result.selected[selector]}"
+
+        for a in result.assertions:
+            descr = a.get_description()
+            for id in a.passing:
+                result_per_elem[id] = "pass"
+            for id in a.failing:
+                result_per_elem[id] = "fail"
+            overall: Status = "pass" if a.passed() else "fail"
+            total_results.append(
+                {
+                    "spec_name": result.spec_name,
+                    "get": select,
+                    "spec": descr,
+                    "result": overall,
+                    "elements": result_per_elem,
+                }
+            )
+    return total_results
 
 
 # endof GLOBALS
