@@ -11,7 +11,7 @@ from specklepy.core.api.models.current import Version
 from specklepy.core.api.models.current import ModelWithVersions
 from os import getenv
 
-type Status = Literal["pass", "fail"]
+Status = Literal["pass", "fail"]
 
 # maple imports
 from .base_extensions import flatten_base
@@ -545,4 +545,3 @@ def account_match_host(account: Account, host: str) -> bool:
     host_url = host.replace("https://", "")
     host_url = host_url.replace("/", "")
     return url == host_url
-    pass
