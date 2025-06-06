@@ -1,12 +1,11 @@
 from deprecated import deprecated
 from typing_extensions import Self, Callable
-from typing import Dict, Any, Literal, Union
+from typing import Dict, Any, Literal
 from specklepy.api.client import Account, SpeckleClient
 from specklepy.api.credentials import get_default_account
 from specklepy.api import operations
 from specklepy.transports.server.server import ServerTransport
 from specklepy.objects import Base
-from specklepy.core.api.models import Branch
 from specklepy.core.api.models.current import Version
 from specklepy.core.api.models.current import ModelWithVersions
 from os import getenv
