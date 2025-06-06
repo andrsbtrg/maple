@@ -166,9 +166,9 @@ def get_results() -> list[Any]:
     total_results = []
     for result in results:
         result_per_elem: Dict[str, Status] = {}
-        select = ""
+        select = []
         for selector in result.selected.keys():
-            select += f"{selector} = {result.selected[selector]}"
+            select.append(f"{selector} = {result.selected[selector]}")
 
         for a in result.assertions:
             descr = a.get_description()
