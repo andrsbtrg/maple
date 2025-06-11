@@ -24,7 +24,7 @@ Status = Literal["pass", "fail"]
 # TODO: Refactor to remove globals
 _test_cases: list[Result] = []  # Contains the results of the runs
 _current_object: Base | None = None
-_stream_id: str = ""
+_project_id: str = ""
 _model_id: str = ""
 _log_out: bool = True
 
@@ -67,8 +67,8 @@ def stream(id: str) -> None:
 
     Returns: None
     """
-    global _stream_id
-    _stream_id = id
+    global _project_id
+    _project_id = id
     global _current_object
     _current_object = None
     return
@@ -86,8 +86,8 @@ def init_model(project_id: str, model_id: str) -> None:
 
     """
     # set the model and project id
-    global _stream_id
-    _stream_id = project_id
+    global _project_id
+    _project_id = project_id
     global _model_id
     _model_id = model_id
     # clear the current object
@@ -109,16 +109,6 @@ def get_token() -> str | None:
     return token
 
 
-def get_stream_id() -> str:
-    """
-    Gets the stream_id provided with mp.stream()
-    """
-    global _stream_id
-    if _stream_id == "":
-        raise Exception("Please provide a Stream id using mp.stream()")
-    return _stream_id
-
-
 def get_model_id() -> str:
     """
     Gets the Model id provided with mp.init_model
@@ -127,6 +117,16 @@ def get_model_id() -> str:
     if _model_id == "":
         raise Exception("Please provide a Model Id to test using mp.init_model()")
     return _model_id
+
+
+def get_project_id() -> str:
+    """
+    Gets the Model id provided with mp.init_model
+    """
+    global _project_id
+    if _project_id == "":
+        raise Exception("Please provide a Project Id to test using mp.init_model()")
+    return _project_id
 
 
 def get_current_obj() -> Base | None:
@@ -452,16 +452,18 @@ def get_last_obj() -> Base:
     else:
         log_to_stdout("No auth present")
 
-    stream_id = get_stream_id()
+    project_id = get_project_id()
     model_id = get_model_id()
-    transport = ServerTransport(client=client, stream_id=stream_id)
+    transport = ServerTransport(client=client, stream_id=project_id)
+
+    models = client.model.get_models(project_id=project_id)
+    found_model = next(filter(lambda x: x.id == model_id, models.items), None)
+    if not found_model:
+        raise Exception("Model not found: ", model_id)
 
     model: ModelWithVersions = client.model.get_with_versions(
-        project_id=stream_id, model_id=model_id
+        project_id=project_id, model_id=found_model.id
     )
-
-    if not model:
-        raise Exception("Could not get models")
 
     versions = model.versions.items
     if len(versions) == 0:
