@@ -218,7 +218,7 @@ class Chainable:
             value = deep_get(obj, parameter_name)
             if not value:
                 break
-            log_to_stdout("object id:", obj.id, value)
+            log_to_stdout(f"object id '{obj.id}' - value: {value}")
             parameter_values.append(value)
 
         if len(parameter_values) > 0:
@@ -389,7 +389,6 @@ def it(spec_name: str):
 
     Returns: None
     """
-    log_to_stdout("-------------------------------------------------------")
     log_to_stdout("Running test:", spec_name)
     get_test_cases().append(Result(spec_name))
 
