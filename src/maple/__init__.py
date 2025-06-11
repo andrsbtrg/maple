@@ -215,10 +215,11 @@ class Chainable:
         objs = self.content
         # check on base object
         for obj in objs:
-            prop = getattr(obj, parameter_name, None)
-            if not prop:
+            value = deep_get(obj, parameter_name)
+            if not value:
                 break
-            parameter_values.append(prop)
+            log_to_stdout("object id:", obj.id, value)
+            parameter_values.append(value)
 
         if len(parameter_values) > 0:
             return parameter_values
@@ -328,8 +329,8 @@ class Chainable:
         objs = self.content
         # check on base object
         for obj in objs:
-            props = getattr(obj, property, None)
-            if not props:
+            value = deep_get(obj, property)
+            if not value:
                 break
             return self
 
@@ -547,3 +548,14 @@ def account_match_host(account: Account, host: str) -> bool:
     host_url = host.replace("https://", "")
     host_url = host_url.replace("/", "")
     return url == host_url
+
+
+def deep_get(obj, path: str):
+    for part in path.split("."):
+        if isinstance(obj, dict):
+            obj = obj.get(part)
+        else:
+            obj = getattr(obj, part, None)
+        if obj is None:
+            break
+    return obj
