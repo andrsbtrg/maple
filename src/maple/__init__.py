@@ -1,23 +1,23 @@
+# maple import
+from .base_extensions import flatten_base
+from .models import Assertion, Result
+from .ops import ComparisonOps, CompOp, property_equal
+from .report import HtmlReport
+from .utils import print_results
+
+from os import getenv
+from typing import Any, Dict, Literal
 from deprecated import deprecated
-from typing_extensions import Self, Callable
-from typing import Dict, Any, Literal
+
+from specklepy.api import operations
 from specklepy.api.client import Account, SpeckleClient
 from specklepy.api.credentials import get_default_account
-from specklepy.api import operations
-from specklepy.transports.server.server import ServerTransport
+from specklepy.core.api.models.current import ModelWithVersions, Version
 from specklepy.objects import Base
-from specklepy.core.api.models.current import Version
-from specklepy.core.api.models.current import ModelWithVersions
-from os import getenv
+from specklepy.transports.server.server import ServerTransport
+from typing_extensions import Callable, Self
 
 Status = Literal["pass", "fail"]
-
-# maple imports
-from .base_extensions import flatten_base
-from .utils import print_results
-from .ops import ComparisonOps, property_equal, CompOp
-from .models import Result, Assertion
-from .report import HtmlReport
 
 
 # GLOBALS
@@ -507,6 +507,7 @@ def log_to_stdout(*args):
 
 def print_info(specs):
     from importlib_metadata import version
+
     from .utils import print_title
 
     print_title("Test session")
