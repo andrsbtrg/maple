@@ -5,7 +5,7 @@ from specklepy.objects import Base
 def flatten_base(base: Base) -> Iterable[Base]:
     """Flatten a base object into an iterable of bases.
 
-    This function recursively traverses the `elements` or `@elements` attribute of the 
+    This function recursively traverses the `elements` or `@elements` attribute of the
     base object, yielding each nested base object.
 
     Args:
@@ -25,7 +25,6 @@ def flatten_base(base: Base) -> Iterable[Base]:
 
 
 def flatten(obj, visited=None):
-
     # Avoiding pesky circular references
     if visited is None:
         visited = set()

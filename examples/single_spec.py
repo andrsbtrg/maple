@@ -12,7 +12,7 @@ def main():
 def test_check_door_height():
     mp.it("Checks that the door height its at least 2.0 m")
 
-    mp.get("type", "IFCDOOR").its("OverallHeight").should("be.greater", 2.0)
+    mp.get("ifcType", "IFCSPATIALZONE").its("ownerId").should("be.equal", 1)
 
 
 if __name__ == "__main__":

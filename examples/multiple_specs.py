@@ -1,5 +1,8 @@
 import setup  # noqa
 import maple as mp
+from os import environ
+
+environ["SPECKLE_HOST"] = "https://latest.speckle.systems"
 
 
 def main():

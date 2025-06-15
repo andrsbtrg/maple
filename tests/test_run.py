@@ -5,10 +5,10 @@ load_dotenv()
 
 
 def test_success_run():
-    stream_id = "24fa0ed1c3"
-    mp.init_model(project_id=stream_id, model_id="2696b4a381")
+    project_id = "24fa0ed1c3"
+    mp.init_model(project_id=project_id, model_id="2696b4a381")
     mp.run(spec)
-    assert mp._stream_id == stream_id
+    assert mp._project_id == project_id
     test_case = mp.get_current_test_case()
 
     assert test_case is not None

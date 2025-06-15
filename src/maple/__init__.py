@@ -1,30 +1,30 @@
+# maple import
+from .base_extensions import flatten_base
+from .models import Assertion, Result
+from .ops import ComparisonOps, CompOp, property_equal
+from .report import HtmlReport
+from .utils import print_results
+
+from os import getenv
+from typing import Any, Dict, Literal
 from deprecated import deprecated
-from typing_extensions import Self, Callable
-from typing import Dict, Any, Literal
+
+from specklepy.api import operations
 from specklepy.api.client import Account, SpeckleClient
 from specklepy.api.credentials import get_default_account
-from specklepy.api import operations
-from specklepy.transports.server.server import ServerTransport
+from specklepy.core.api.models.current import ModelWithVersions, Version
 from specklepy.objects import Base
-from specklepy.core.api.models.current import Version
-from specklepy.core.api.models.current import ModelWithVersions
-from os import getenv
+from specklepy.transports.server.server import ServerTransport
+from typing_extensions import Callable, Self
 
 Status = Literal["pass", "fail"]
-
-# maple imports
-from .base_extensions import flatten_base
-from .utils import print_results
-from .ops import ComparisonOps, property_equal, CompOp
-from .models import Result, Assertion
-from .report import HtmlReport
 
 
 # GLOBALS
 # TODO: Refactor to remove globals
 _test_cases: list[Result] = []  # Contains the results of the runs
 _current_object: Base | None = None
-_stream_id: str = ""
+_project_id: str = ""
 _model_id: str = ""
 _log_out: bool = True
 
@@ -67,8 +67,8 @@ def stream(id: str) -> None:
 
     Returns: None
     """
-    global _stream_id
-    _stream_id = id
+    global _project_id
+    _project_id = id
     global _current_object
     _current_object = None
     return
@@ -86,8 +86,8 @@ def init_model(project_id: str, model_id: str) -> None:
 
     """
     # set the model and project id
-    global _stream_id
-    _stream_id = project_id
+    global _project_id
+    _project_id = project_id
     global _model_id
     _model_id = model_id
     # clear the current object
@@ -109,16 +109,6 @@ def get_token() -> str | None:
     return token
 
 
-def get_stream_id() -> str:
-    """
-    Gets the stream_id provided with mp.stream()
-    """
-    global _stream_id
-    if _stream_id == "":
-        raise Exception("Please provide a Stream id using mp.stream()")
-    return _stream_id
-
-
 def get_model_id() -> str:
     """
     Gets the Model id provided with mp.init_model
@@ -127,6 +117,16 @@ def get_model_id() -> str:
     if _model_id == "":
         raise Exception("Please provide a Model Id to test using mp.init_model()")
     return _model_id
+
+
+def get_project_id() -> str:
+    """
+    Gets the Model id provided with mp.init_model
+    """
+    global _project_id
+    if _project_id == "":
+        raise Exception("Please provide a Project Id to test using mp.init_model()")
+    return _project_id
 
 
 def get_current_obj() -> Base | None:
@@ -215,10 +215,11 @@ class Chainable:
         objs = self.content
         # check on base object
         for obj in objs:
-            prop = getattr(obj, parameter_name, None)
-            if not prop:
+            value = deep_get(obj, parameter_name)
+            if not value:
                 break
-            parameter_values.append(prop)
+            log_to_stdout(f"object id '{obj.id}' - value: {value}")
+            parameter_values.append(value)
 
         if len(parameter_values) > 0:
             return parameter_values
@@ -328,8 +329,8 @@ class Chainable:
         objs = self.content
         # check on base object
         for obj in objs:
-            props = getattr(obj, property, None)
-            if not props:
+            value = deep_get(obj, property)
+            if not value:
                 break
             return self
 
@@ -388,7 +389,6 @@ def it(spec_name: str):
 
     Returns: None
     """
-    log_to_stdout("-------------------------------------------------------")
     log_to_stdout("Running test:", spec_name)
     get_test_cases().append(Result(spec_name))
 
@@ -452,16 +452,18 @@ def get_last_obj() -> Base:
     else:
         log_to_stdout("No auth present")
 
-    stream_id = get_stream_id()
+    project_id = get_project_id()
     model_id = get_model_id()
-    transport = ServerTransport(client=client, stream_id=stream_id)
+    transport = ServerTransport(client=client, stream_id=project_id)
+
+    models = client.model.get_models(project_id=project_id)
+    found_model = next(filter(lambda x: x.id == model_id, models.items), None)
+    if not found_model:
+        raise Exception("Model not found: ", model_id)
 
     model: ModelWithVersions = client.model.get_with_versions(
-        project_id=stream_id, model_id=model_id
+        project_id=project_id, model_id=found_model.id
     )
-
-    if not model:
-        raise Exception("Could not get models")
 
     versions = model.versions.items
     if len(versions) == 0:
@@ -507,6 +509,7 @@ def log_to_stdout(*args):
 
 def print_info(specs):
     from importlib_metadata import version
+
     from .utils import print_title
 
     print_title("Test session")
@@ -544,3 +547,14 @@ def account_match_host(account: Account, host: str) -> bool:
     host_url = host.replace("https://", "")
     host_url = host_url.replace("/", "")
     return url == host_url
+
+
+def deep_get(obj, path: str):
+    for part in path.split("."):
+        if isinstance(obj, dict):
+            obj = obj.get(part)
+        else:
+            obj = getattr(obj, part, None)
+        if obj is None:
+            break
+    return obj
