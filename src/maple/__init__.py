@@ -470,7 +470,7 @@ def get_last_obj() -> Base:
         raise Exception("Model contains no versions.")
     if type(versions[0]) is not Version:
         raise Exception("Type of element is not Model: ", type(versions[0]))
-    last_obj_id = versions[0].referencedObject
+    last_obj_id = versions[0].referenced_object
 
     if not last_obj_id:
         raise Exception("No object_id")
