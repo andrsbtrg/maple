@@ -1,14 +1,8 @@
 # maple import
-from .base_extensions import flatten_base
-from .models import Assertion, Result
-from .ops import ComparisonOps, CompOp, property_equal, deep_get
-from .report import HtmlReport
-from .utils import print_results
-
 from os import getenv
-from typing import Any, Dict, Literal
-from deprecated import deprecated
+from typing import Any, Dict, Literal, overload
 
+from deprecated import deprecated
 from specklepy.api import operations
 from specklepy.api.client import Account, SpeckleClient
 from specklepy.api.credentials import get_default_account
@@ -16,6 +10,12 @@ from specklepy.core.api.models.current import ModelWithVersions, Version
 from specklepy.objects import Base
 from specklepy.transports.server.server import ServerTransport
 from typing_extensions import Callable, Self
+
+from .base_extensions import flatten_base
+from .models import Assertion, Result
+from .ops import CompOp, ComparisonOps, deep_get, property_equal
+from .report import HtmlReport
+from .utils import print_results
 
 Status = Literal["pass", "fail"]
 
@@ -294,6 +294,38 @@ class Chainable:
             return self._should_have_length(assertion_value)
         else:
             return self._should_have_param_value(comparer_op, assertion_value)
+
+    def should_satisfy(self, func: Callable[[Any], bool]) -> Self:
+        """
+        Asserts using a custom condition.
+        Args:
+            func: a function that takes one argument and returns true or false
+        Returns: Chainable
+        """
+        log_to_stdout("Asserting - should satisfy")
+
+        if not isinstance(func, Callable):
+            raise TypeError(
+                "Argument to should_satisfy must be a function. Got " + type(func)
+            )
+        selected_values = self._select_parameters_values(self.selector)
+
+        objs = self.content
+
+        # store results in the last Results in test_cases
+        for i, param_value in enumerate(selected_values):
+            if func(param_value):
+                self.assertion.set_passed(objs[i].id)
+            else:
+                log_to_stdout(f"object id '{objs[i].id}' - value: {param_value}")
+                self.assertion.set_failed(objs[i].id)
+
+        current = get_current_test_case()
+        if current is None:
+            raise Exception("Expected current test case not to be None")
+        current.assertions.append(self.assertion)
+
+        return self
 
     def its(self, property: str) -> Self:
         """
