@@ -7,19 +7,33 @@ from enum import StrEnum
 from typing import Any, Literal
 
 
+def deep_get(obj, path: str):
+    for part in path.split("."):
+        if isinstance(obj, dict):
+            obj = obj.get(part)
+        else:
+            obj = getattr(obj, part, None)
+        if obj is None:
+            break
+    return obj
+
+
 def property_equal(propName: str, value: str, obj: Base):
     """
     Evaluates if an object <obj> propName has value equal to value
     Args:
-        propName: the name of the property to find
+        propName: the name of the property to find.
+            it accepts a property path separated by '.'
+            Example: 'properties.quantities.area'
         value: the value to equalize
         obj: the object to extract the poperty
 
     Returns: true if equal or False if not equal or does not exist
     """
     try:
-        return getattr(obj, propName) == value
-    except Exception:
+        return deep_get(obj, propName) == value
+    except Exception as e:
+        print(e)
         return False
 
 
@@ -38,6 +52,8 @@ class CompOp(StrEnum):
     BE_EQUAL = "be.equal"
     HAVE_VALUE = "have.value"
     HAVE_LENGTH = "have.length"
+    ## Add not have value
+    ## Add option to pass anonimous function to assert
 
     def evaluate(self, param_value: Any, assertion_value: Any) -> bool:
         """
@@ -58,9 +74,19 @@ class CompOp(StrEnum):
             elif self == CompOp.HAVE_VALUE:
                 return str(param_value).lower() == str(assertion_value).lower()
             elif self == CompOp.BE_EQUAL:  # numbers or floats
-                return round(float(param_value), 2) == round(float(assertion_value), 2)
-        except Exception:
-            # log error
-            print("Could not assert")
+                if not isinstance(assertion_value, float) and not isinstance(
+                    assertion_value, int
+                ):
+                    raise ValueError(
+                        "be.equal expects a numeric assertion value. Got: ",
+                        assertion_value,
+                    )
+                try:
+                    float_value = float(param_value)
+                except ValueError:
+                    raise ValueError(f"Could not parse {param_value}.")
+                return round(float_value, 2) == round(float(assertion_value), 2)
+        except Exception as e:
+            print("Could not assert: ", e)
             return False
         return False

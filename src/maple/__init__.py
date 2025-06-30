@@ -1,7 +1,7 @@
 # maple import
 from .base_extensions import flatten_base
 from .models import Assertion, Result
-from .ops import ComparisonOps, CompOp, property_equal
+from .ops import ComparisonOps, CompOp, property_equal, deep_get
 from .report import HtmlReport
 from .utils import print_results
 
@@ -218,27 +218,12 @@ class Chainable:
             value = deep_get(obj, parameter_name)
             if not value:
                 break
-            log_to_stdout(f"object id '{obj.id}' - value: {value}")
+            # log_to_stdout(f"object id '{obj.id}' - value: {value}")
             parameter_values.append(value)
 
         if len(parameter_values) > 0:
             return parameter_values
 
-        # check in parameters
-        for obj in objs:
-            parameters = getattr(obj, "parameters")
-            if parameters is None:
-                raise AttributeError("no parameters")
-            params = [
-                a
-                for a in dir(parameters)
-                if not a.startswith("_") and not callable(getattr(parameters, a))
-            ]
-            for p in params:
-                attr = getattr(parameters, p)
-                if hasattr(attr, "name"):
-                    if getattr(parameters, p)["name"] == parameter_name:
-                        parameter_values.append(attr.value)
         return parameter_values
 
     def _should_have_length(self, length: int) -> Self:
@@ -281,6 +266,7 @@ class Chainable:
             if comparer.evaluate(param_value, assertion_value):
                 self.assertion.set_passed(objs[i].id)
             else:
+                log_to_stdout(f"object id '{objs[i].id}' - value: {param_value}")
                 self.assertion.set_failed(objs[i].id)
 
         current = get_current_test_case()
@@ -331,27 +317,8 @@ class Chainable:
         for obj in objs:
             value = deep_get(obj, property)
             if not value:
-                break
-            return self
-
-        # check inside parameters
-        for obj in objs:
-            parameters = getattr(obj, "parameters")
-            if parameters is None:
-                raise AttributeError("no parameters")
-            params = [
-                a
-                for a in dir(parameters)
-                if not a.startswith("_") and not callable(getattr(parameters, a))
-            ]
-            found = False
-            for p in params:
-                attr = getattr(parameters, p)
-                if hasattr(attr, "name"):
-                    if getattr(parameters, p)["name"] == self.selector:
-                        found = True
-            if not found:
                 self.assertion.set_failed(obj.id)
+                log_to_stdout(f"object id: '{obj.id}' has no property '{property}'")
         return self
 
     def where(self, selector: str, value: str) -> Self:
@@ -547,14 +514,3 @@ def account_match_host(account: Account, host: str) -> bool:
     host_url = host.replace("https://", "")
     host_url = host_url.replace("/", "")
     return url == host_url
-
-
-def deep_get(obj, path: str):
-    for part in path.split("."):
-        if isinstance(obj, dict):
-            obj = obj.get(part)
-        else:
-            obj = getattr(obj, part, None)
-        if obj is None:
-            break
-    return obj
