@@ -1,14 +1,10 @@
 # maple import
-from .base_extensions import flatten_base
-from .models import Assertion, Result
-from .ops import ComparisonOps, CompOp, property_equal
-from .report import HtmlReport
-from .utils import print_results
 
 from os import getenv
-from typing import Any, Dict, Literal
-from deprecated import deprecated
+from typing import Any, Dict, Literal, overload
 
+import sys
+from deprecated import deprecated
 from specklepy.api import operations
 from specklepy.api.client import Account, SpeckleClient
 from specklepy.api.credentials import get_default_account
@@ -16,6 +12,20 @@ from specklepy.core.api.models.current import ModelWithVersions, Version
 from specklepy.objects import Base
 from specklepy.transports.server.server import ServerTransport
 from typing_extensions import Callable, Self
+
+from .base_extensions import flatten_base
+from .models import Assertion, Result
+from .ops import CompOp, ComparisonOps, deep_get, property_equal
+from .report import HtmlReport
+from .utils import print_results
+
+import logging
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+logging.getLogger("specklepy").setLevel(logging.WARNING)
+logging.getLogger("gql.transport.requests").setLevel(logging.WARNING)
+
 
 Status = Literal["pass", "fail"]
 
@@ -26,7 +36,6 @@ _test_cases: list[Result] = []  # Contains the results of the runs
 _current_object: Base | None = None
 _project_id: str = ""
 _model_id: str = ""
-_log_out: bool = True
 
 
 def init(obj: Base) -> None:
@@ -218,27 +227,11 @@ class Chainable:
             value = deep_get(obj, parameter_name)
             if not value:
                 break
-            log_to_stdout(f"object id '{obj.id}' - value: {value}")
             parameter_values.append(value)
 
         if len(parameter_values) > 0:
             return parameter_values
 
-        # check in parameters
-        for obj in objs:
-            parameters = getattr(obj, "parameters")
-            if parameters is None:
-                raise AttributeError("no parameters")
-            params = [
-                a
-                for a in dir(parameters)
-                if not a.startswith("_") and not callable(getattr(parameters, a))
-            ]
-            for p in params:
-                attr = getattr(parameters, p)
-                if hasattr(attr, "name"):
-                    if getattr(parameters, p)["name"] == parameter_name:
-                        parameter_values.append(attr.value)
         return parameter_values
 
     def _should_have_length(self, length: int) -> Self:
@@ -281,6 +274,7 @@ class Chainable:
             if comparer.evaluate(param_value, assertion_value):
                 self.assertion.set_passed(objs[i].id)
             else:
+                logger.warning(f"object id '{objs[i].id}' - value: {param_value}")
                 self.assertion.set_failed(objs[i].id)
 
         current = get_current_test_case()
@@ -299,7 +293,7 @@ class Chainable:
         Raises: ValueError if comparer is not a defined CompOp
         Returns: Chainable
         """
-        log_to_stdout("Asserting - should:", comparer, assertion_value)
+        logger.info("Asserting - should: %s %s", comparer, assertion_value)
         comparer_op = CompOp(comparer)
         self.assertion.value = assertion_value
         self.assertion.comparer = comparer_op
@@ -308,6 +302,38 @@ class Chainable:
             return self._should_have_length(assertion_value)
         else:
             return self._should_have_param_value(comparer_op, assertion_value)
+
+    def should_satisfy(self, func: Callable[[Any], bool]) -> Self:
+        """
+        Asserts using a custom condition.
+        Args:
+            func: a function that takes one argument and returns true or false
+        Returns: Chainable
+        """
+        logger.info("Asserting - should satisfy")
+
+        if not isinstance(func, Callable):
+            raise TypeError(
+                "Argument to should_satisfy must be a function. Got " + type(func)
+            )
+        selected_values = self._select_parameters_values(self.selector)
+
+        objs = self.content
+
+        # store results in the last Results in test_cases
+        for i, param_value in enumerate(selected_values):
+            if func(param_value):
+                self.assertion.set_passed(objs[i].id)
+            else:
+                logger.warning(f"object id '{objs[i].id}' - value: {param_value}")
+                self.assertion.set_failed(objs[i].id)
+
+        current = get_current_test_case()
+        if current is None:
+            raise Exception("Expected current test case not to be None")
+        current.assertions.append(self.assertion)
+
+        return self
 
     def its(self, property: str) -> Self:
         """
@@ -322,7 +348,7 @@ class Chainable:
             AttributeError: if the parameter name does not match in the
             inner object selected with get
         """
-        log_to_stdout("Selecting", property)
+        logger.info("Selecting %s", property)
         self.selector = property
         self.assertion.selector = property
 
@@ -331,27 +357,8 @@ class Chainable:
         for obj in objs:
             value = deep_get(obj, property)
             if not value:
-                break
-            return self
-
-        # check inside parameters
-        for obj in objs:
-            parameters = getattr(obj, "parameters")
-            if parameters is None:
-                raise AttributeError("no parameters")
-            params = [
-                a
-                for a in dir(parameters)
-                if not a.startswith("_") and not callable(getattr(parameters, a))
-            ]
-            found = False
-            for p in params:
-                attr = getattr(parameters, p)
-                if hasattr(attr, "name"):
-                    if getattr(parameters, p)["name"] == self.selector:
-                        found = True
-            if not found:
                 self.assertion.set_failed(obj.id)
+                logger.warning(f"object id: '{obj.id}' has no property '{property}'")
         return self
 
     def where(self, selector: str, value: str) -> Self:
@@ -365,7 +372,7 @@ class Chainable:
 
         Returns: Chainable
         """
-        log_to_stdout("Filtering by:", selector, value)
+        logger.info("Filtering by: %s - %s", selector, value)
         current = get_current_test_case()
         if current is None:
             raise Exception("Expected current test case not to be None")
@@ -374,7 +381,7 @@ class Chainable:
         selected = list(
             filter(lambda obj: property_equal(selector, value, obj), self.content)
         )
-        log_to_stdout("Elements after filter:", len(selected))
+        logger.info("Elements after filter: %i", len(selected))
         self.content = selected
         return self
 
@@ -389,7 +396,7 @@ def it(spec_name: str):
 
     Returns: None
     """
-    log_to_stdout("Running test:", spec_name)
+    logger.info("Running test: %s", spec_name)
     get_test_cases().append(Result(spec_name))
 
 
@@ -410,7 +417,7 @@ def get(selector: str, value: str) -> Chainable:
         Exception: If it was not possible to query a speckle object
     """
 
-    log_to_stdout("Getting", selector, value)
+    logger.info("Getting %s %s", selector, value)
     current_test = get_current_test_case()
     if current_test is None:
         raise Exception("Expected current test case not to be None")
@@ -425,7 +432,7 @@ def get(selector: str, value: str) -> Chainable:
     objs = list(flatten_base(speckle_obj))
 
     selected = list(filter(lambda obj: property_equal(selector, value, obj), objs))
-    log_to_stdout("Got", len(selected), value)
+    logger.info("Got %i %s", len(selected), value)
 
     return Chainable(selected)
 
@@ -434,23 +441,23 @@ def get_last_obj() -> Base:
     """
     Gets the last object for the specified stream_id
     """
-    log_to_stdout("Getting object from speckle")
+    logger.info("Getting object from speckle")
     host = getenv("SPECKLE_HOST")
     if not host:
         host = "https://app.speckle.systems"
-    log_to_stdout("Using Speckle host:", host)
+    logger.info("Using Speckle host: %s", host)
     client = SpeckleClient(host)
     # authenticate the client with a token
     account = get_default_account()
     token = get_token()
     if token:
-        log_to_stdout("Auth with token")
+        logger.debug("Auth with token")
         client.authenticate_with_token(token)
     elif account and account_match_host(account, host):
-        log_to_stdout("Auth with default account")
+        logger.debug("Auth with default account")
         client.authenticate_with_account(account)
     else:
-        log_to_stdout("No auth present")
+        logger.warning("No auth present")
 
     project_id = get_project_id()
     model_id = get_model_id()
@@ -501,12 +508,6 @@ def run(*specs: Callable):
     print_results(get_test_cases())
 
 
-def log_to_stdout(*args):
-    global _log_out
-    if _log_out:
-        print("INFO:", *args)
-
-
 def print_info(specs):
     from importlib_metadata import version
 
@@ -532,13 +533,13 @@ def generate_report(output_path: str) -> str:
         output_path: directory to save reports. It must be an
         existing directory.
     """
-    log_to_stdout("Creating report")
+    logger.info("Creating report")
     results = get_test_cases()
     if len(results) == 0:
         raise Exception("mp.run must be called before generating report")
     report = HtmlReport(results)
     file_created = report.create(output_path)
-    log_to_stdout("Report created on", file_created)
+    logger.info("Report created on %s", file_created)
     return file_created
 
 
@@ -547,14 +548,3 @@ def account_match_host(account: Account, host: str) -> bool:
     host_url = host.replace("https://", "")
     host_url = host_url.replace("/", "")
     return url == host_url
-
-
-def deep_get(obj, path: str):
-    for part in path.split("."):
-        if isinstance(obj, dict):
-            obj = obj.get(part)
-        else:
-            obj = getattr(obj, part, None)
-        if obj is None:
-            break
-    return obj
