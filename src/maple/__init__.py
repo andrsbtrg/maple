@@ -1,9 +1,8 @@
 # maple import
 
 from os import getenv
-from typing import Any, Dict, Literal, overload
+from typing import Any, Dict, Literal
 
-import sys
 from deprecated import deprecated
 from specklepy.api import operations
 from specklepy.api.client import Account, SpeckleClient
@@ -310,12 +309,13 @@ class Chainable:
             func: a function that takes one argument and returns true or false
         Returns: Chainable
         """
-        logger.info("Asserting - should satisfy")
-
-        if not isinstance(func, Callable):
+        if not callable(func):
             raise TypeError(
                 "Argument to should_satisfy must be a function. Got " + type(func)
             )
+        logger.info("Asserting - should satisfy")
+        self.assertion.comparer = func
+
         selected_values = self._select_parameters_values(self.selector)
 
         objs = self.content

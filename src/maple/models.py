@@ -1,4 +1,5 @@
 import maple
+from typing import Any, Callable
 
 
 class Assertion:
@@ -15,8 +16,8 @@ class Assertion:
     """
 
     def __init__(self) -> None:
-        self.comparer: maple.CompOp
-        self.value = None  # what will be compared to
+        self.comparer: maple.CompOp | Callable | None = None
+        self.value: Any = None  # what will be compared to
         self.passing: list[str] = []
         self.failing: list[str] = []
         self.selector = ""
