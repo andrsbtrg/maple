@@ -1,5 +1,6 @@
 import maple
-from typing import Any, Callable
+from acers import Collision
+from typing import Any, Callable, Literal, Self
 
 
 class Assertion:
@@ -63,3 +64,5 @@ class Result:
         self.spec_name = spec_name
         self.selected = {}
         self.assertions: list[Assertion] = []
+        self.type: Literal["spec", "collision"] = "spec"
+        self.collision_results: list[Collision] = []
