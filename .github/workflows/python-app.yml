@@ -31,6 +31,6 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test with pytest
       env:
-        SPECKLE_TOKEN: ${{secrets.SPECKLE_TOKEN}}}
-        SPECKLE_HOST: https://latest.speckle.systems
+        SPECKLE_TOKEN: ${{secrets.SPECKLE_TOKEN}}
+        SPECKLE_HOST: ${{secrets.SPECKLE_HOST}}
       run: pytest 
