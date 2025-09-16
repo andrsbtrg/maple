@@ -8,11 +8,11 @@ mp.init_model(project_id="21f8910cc7", model_id="f4a1103c37")
 
 
 def clash_detection():
-    mp.it("Clash detection between structure and category")
-    structure = mp.get("category", "Planting")
-    dors = mp.get("category", "Topography")
+    mp.it("Clash detection between walls and windows")
+    windows = mp.get("category", "Windows")
+    walls = mp.get("category", "Walls")
 
-    mp.detect_collision(structure, dors)
+    mp.detect_collision(windows, walls)
 
 
 mp.run(clash_detection)
