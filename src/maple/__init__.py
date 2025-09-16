@@ -8,7 +8,7 @@ from acers import clash_detection, Collision
 from deprecated import deprecated
 from specklepy.api import operations
 from specklepy.api.client import Account, SpeckleClient
-from specklepy.api.credentials import get_default_account
+from specklepy.api.credentials import get_default_account, get_account_from_token
 from specklepy.core.api.models.current import ModelWithVersions, Version
 from specklepy.objects import Base
 from specklepy.transports.server.server import ServerTransport
@@ -465,6 +465,7 @@ def get_last_obj() -> Base:
     token = get_token()
     if token:
         logger.debug("Auth with token")
+        account = get_account_from_token(token, host)
         client.authenticate_with_token(token)
     elif account and account_match_host(account, host):
         logger.debug("Auth with default account")
