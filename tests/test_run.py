@@ -1,12 +1,16 @@
 import maple as mp
 from dotenv import load_dotenv
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
 load_dotenv()
 
 
 def test_success_run():
-    project_id = "24fa0ed1c3"
-    mp.init_model(project_id=project_id, model_id="2696b4a381")
+    project_id = "21f8910cc7"
+    mp.init_model(project_id=project_id, model_id="f4a1103c37")
     mp.run(spec)
     assert mp._project_id == project_id
     test_case = mp.get_current_test_case()
@@ -26,8 +30,8 @@ def test_error_run():
 
 
 def test_multiple_streams():
-    stream_id = "24fa0ed1c3"
-    mp.init_model(project_id=stream_id, model_id="2696b4a381")
+    stream_id = "21f8910cc7"
+    mp.init_model(project_id=stream_id, model_id="f4a1103c37")
     mp.run(spec)
 
     # We set the stream id to another, it doesn't

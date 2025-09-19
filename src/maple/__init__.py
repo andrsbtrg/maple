@@ -1,12 +1,14 @@
 # maple import
 
 from os import getenv
-from typing import Any, Dict, Literal
+from typing import Any, Dict, Literal, List
+
+from acers import clash_detection, Collision
 
 from deprecated import deprecated
 from specklepy.api import operations
 from specklepy.api.client import Account, SpeckleClient
-from specklepy.api.credentials import get_default_account
+from specklepy.api.credentials import get_default_account, get_account_from_token
 from specklepy.core.api.models.current import ModelWithVersions, Version
 from specklepy.objects import Base
 from specklepy.transports.server.server import ServerTransport
@@ -16,7 +18,7 @@ from .base_extensions import flatten_base
 from .models import Assertion, Result
 from .ops import CompOp, ComparisonOps, deep_get, property_equal
 from .report import HtmlReport
-from .utils import print_results
+from .utils import print_results, log_collision
 
 import logging
 
@@ -172,25 +174,40 @@ def get_results() -> list[Any]:
 
     total_results = []
     for result in results:
-        result_per_elem: Dict[str, Status] = {}
-        select = []
-        for selector in result.selected.keys():
-            select.append(f"{selector} = {result.selected[selector]}")
+        if result.type == "spec":
+            result_per_elem: Dict[str, Status] = {}
+            select = []
+            for selector in result.selected.keys():
+                select.append(f"{selector} = {result.selected[selector]}")
 
-        for a in result.assertions:
-            descr = a.get_description()
-            for id in a.passing:
-                result_per_elem[id] = "pass"
-            for id in a.failing:
-                result_per_elem[id] = "fail"
-            overall: Status = "pass" if a.passed() else "fail"
+            for a in result.assertions:
+                descr = a.get_description()
+                for id in a.passing:
+                    result_per_elem[id] = "pass"
+                for id in a.failing:
+                    result_per_elem[id] = "fail"
+                overall: Status = "pass" if a.passed() else "fail"
+                total_results.append(
+                    {
+                        "type": "spec",
+                        "spec_name": result.spec_name,
+                        "get": select,
+                        "spec": descr,
+                        "result": overall,
+                        "elements": result_per_elem,
+                    }
+                )
+        elif result.type == "collision":
+            collision_result = result.collision_results
             total_results.append(
                 {
+                    "type": "collision",
                     "spec_name": result.spec_name,
-                    "get": select,
-                    "spec": descr,
-                    "result": overall,
-                    "elements": result_per_elem,
+                    "result": "fail" if len(collision_result) > 0 else "pass",
+                    "collisions": [
+                        {"ids": x.ids, "dist": x.dist, "point": x.point}
+                        for x in collision_result
+                    ],
                 }
             )
     return total_results
@@ -309,10 +326,6 @@ class Chainable:
             func: a function that takes one argument and returns true or false
         Returns: Chainable
         """
-        if not callable(func):
-            raise TypeError(
-                "Argument to should_satisfy must be a function. Got " + type(func)
-            )
         logger.info("Asserting - should satisfy")
         self.assertion.comparer = func
 
@@ -452,6 +465,7 @@ def get_last_obj() -> Base:
     token = get_token()
     if token:
         logger.debug("Auth with token")
+        account = get_account_from_token(token, host)
         client.authenticate_with_token(token)
     elif account and account_match_host(account, host):
         logger.debug("Auth with default account")
@@ -506,6 +520,53 @@ def run(*specs: Callable):
 
     # print results
     print_results(get_test_cases())
+
+
+def detect_collision(
+    set_a: Chainable, set_b: Chainable, min_dist=0.0
+) -> List[Collision]:
+    """
+    Check collision between all elements of two sets
+    Args:
+        set_a: Chainable
+        set_b: Chainable
+        min_dist: A distance between elements smaller than this will show as a clash.
+            Default = 0. Elements whose face are touching don't register as a collision
+    """
+
+    results = get_current_test_case()
+    if not results:
+        logger.warning("Not possible to save results. The current test case is None")
+        raise Exception("Expected result to not be None")
+
+    results.type = "collision"
+
+    logger.info("Executing collision detection")
+    set_a_string = serialize_set(set_a)
+    set_b_string = serialize_set(set_b)
+    collisions = clash_detection(set_a_string, set_b_string, min_dist)
+
+    logger.info(f"Found {len(collisions)} collision(s)")
+
+    results.collision_results = collisions
+
+    if len(collisions) > 0:
+        for c in collisions:
+            log_collision(logger, c, set_a.content, set_b.content)
+
+    return collisions
+
+
+def serialize_set(test_set: Chainable) -> str:
+    """
+    Serializes the seleced objects in a set to a string
+    """
+    response = ""
+    for obj in test_set.content:
+        if isinstance(obj, Base):
+            if "displayValue" in obj.get_member_names():
+                response += f"{obj.id}\t{operations.serialize(obj)}\n"
+    return response
 
 
 def print_info(specs):

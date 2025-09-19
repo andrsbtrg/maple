@@ -6,13 +6,13 @@ load_dotenv()
 
 
 def test_multiple_runs():
-    project_id = "24fa0ed1c3"
-    mp.init_model(project_id=project_id, model_id="2696b4a381")
+    project_id = "21f8910cc7"
+    mp.init_model(project_id=project_id, model_id="f4a1103c37")
     mp.run(spec)
     assert len(mp.get_test_cases()) == 1
     assert mp.get_current_test_case() is not None
     # Initialize a second model to test should clear results
-    mp.init_model(project_id=project_id, model_id="2696b4a381")
+    mp.init_model(project_id=project_id, model_id="f4a1103c37")
     assert len(mp.get_test_cases()) == 0
     assert mp.get_current_test_case() is None
     mp.run(spec)

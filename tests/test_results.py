@@ -10,8 +10,8 @@ spec_name = f"checks window height is greater than {min_height} mm"
 
 
 def test_results():
-    stream_id = "24fa0ed1c3"
-    mp.init_model(project_id=stream_id, model_id="2696b4a381")
+    stream_id = "21f8910cc7"
+    mp.init_model(project_id=stream_id, model_id="f4a1103c37")
     mp.run(spec)
     results = mp.get_results()
     assert len(results) == 1
