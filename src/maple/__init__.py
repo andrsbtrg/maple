@@ -461,17 +461,18 @@ def get_last_obj() -> Base:
     logger.info("Using Speckle host: %s", host)
     client = SpeckleClient(host)
     # authenticate the client with a token
-    account = get_default_account()
     token = get_token()
     if token:
-        logger.debug("Auth with token")
+        logger.info("Auth with token")
         account = get_account_from_token(token, host)
         client.authenticate_with_token(token)
-    elif account and account_match_host(account, host):
-        logger.debug("Auth with default account")
-        client.authenticate_with_account(account)
     else:
-        logger.warning("No auth present")
+        account = get_default_account()
+        if account and account_match_host(account, host):
+            logger.info("Auth with default account")
+            client.authenticate_with_account(account)
+        else:
+            logger.warning("No auth present")
 
     project_id = get_project_id()
     model_id = get_model_id()
