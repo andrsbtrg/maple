@@ -1,7 +1,7 @@
 # maple import
 
 from os import getenv
-from typing import Any, Dict, Literal, List
+from typing import Any, Dict, List
 
 from acers import clash_detection, Collision
 
@@ -12,13 +12,15 @@ from specklepy.api.credentials import get_default_account, get_account_from_toke
 from specklepy.core.api.models.current import ModelWithVersions, Version
 from specklepy.objects import Base
 from specklepy.transports.server.server import ServerTransport
-from typing_extensions import Callable, Self
+from typing_extensions import Callable
+
+from maple.base.chainable import Chainable
 
 from .base_extensions import flatten_base
-from .models import Assertion, Result
-from .ops import CompOp, ComparisonOps, deep_get, property_equal
+from .models import Result, Status
+from .ops import property_equal
 from .report import HtmlReport
-from .utils import print_results, log_collision
+from .utils import print_results, log_collision, serialize_set
 
 import logging
 
@@ -26,9 +28,6 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 logging.getLogger("specklepy").setLevel(logging.WARNING)
 logging.getLogger("gql.transport.requests").setLevel(logging.WARNING)
-
-
-Status = Literal["pass", "fail"]
 
 
 # GLOBALS
@@ -216,189 +215,6 @@ def get_results() -> list[Any]:
 # endof GLOBALS
 
 
-class Chainable:
-    def __init__(self, data):
-        self.content = data
-        self.selector = ""
-        self.assertion: Assertion = Assertion()
-
-    def _select_parameters_values(self, parameter_name: str) -> list[Any]:
-        """
-        Gets a list of the values of each object in self.content
-        where the parameter_name matches
-
-        Args:
-            parameter_name:
-
-        Returns: a list of the value of the parameter matching
-
-        Raises:
-            AttributeError:
-
-        """
-        parameter_values = []
-        objs = self.content
-        # check on base object
-        for obj in objs:
-            value = deep_get(obj, parameter_name)
-            if not value:
-                break
-            parameter_values.append(value)
-
-        if len(parameter_values) > 0:
-            return parameter_values
-
-        return parameter_values
-
-    def _should_have_length(self, length: int) -> Self:
-        """
-        Use to check wether the content has length equal to length
-
-        Args:
-            length (int): length to compare
-
-        """
-        objs = self.content
-        self.assertion.selector = "Collection"
-        if len(objs) == length:
-            self.assertion.set_passed("have.length")
-        else:
-            self.assertion.set_failed("have.length")
-        current = get_current_test_case()
-        if current is None:
-            raise Exception("Expected current test case not to be None")
-        current.assertions.append(self.assertion)
-        return self
-
-    def _should_have_param_value(self, comparer: CompOp, assertion_value: Any) -> Self:
-        """
-        Using the comparer will get the parameter given by the self.selector
-        for each object and compare each one against assertion_value
-
-        Args:
-            comparer: CompOp
-            assertion_value: any value to compare
-
-        Returns: Chainable
-        """
-        selected_values = self._select_parameters_values(self.selector)
-
-        objs = self.content
-
-        # store results in the last Results in test_cases
-        for i, param_value in enumerate(selected_values):
-            if comparer.evaluate(param_value, assertion_value):
-                self.assertion.set_passed(objs[i].id)
-            else:
-                logger.warning(f"object id '{objs[i].id}' - value: {param_value}")
-                self.assertion.set_failed(objs[i].id)
-
-        current = get_current_test_case()
-        if current is None:
-            raise Exception("Expected current test case not to be None")
-        current.assertions.append(self.assertion)
-
-        return self
-
-    def should(self, comparer: ComparisonOps, assertion_value) -> Self:
-        """
-        Assert something inside the Chainable
-        Args:
-            comparer: one of CompOp possible enum values
-            assertion_value: value to assert
-        Raises: ValueError if comparer is not a defined CompOp
-        Returns: Chainable
-        """
-        logger.info("Asserting - should: %s %s", comparer, assertion_value)
-        comparer_op = CompOp(comparer)
-        self.assertion.value = assertion_value
-        self.assertion.comparer = comparer_op
-
-        if comparer_op == CompOp.HAVE_LENGTH:
-            return self._should_have_length(assertion_value)
-        else:
-            return self._should_have_param_value(comparer_op, assertion_value)
-
-    def should_satisfy(self, func: Callable[[Any], bool]) -> Self:
-        """
-        Asserts using a custom condition.
-        Args:
-            func: a function that takes one argument and returns true or false
-        Returns: Chainable
-        """
-        logger.info("Asserting - should satisfy")
-        self.assertion.comparer = func
-
-        selected_values = self._select_parameters_values(self.selector)
-
-        objs = self.content
-
-        # store results in the last Results in test_cases
-        for i, param_value in enumerate(selected_values):
-            if func(param_value):
-                self.assertion.set_passed(objs[i].id)
-            else:
-                logger.warning(f"object id '{objs[i].id}' - value: {param_value}")
-                self.assertion.set_failed(objs[i].id)
-
-        current = get_current_test_case()
-        if current is None:
-            raise Exception("Expected current test case not to be None")
-        current.assertions.append(self.assertion)
-
-        return self
-
-    def its(self, property: str) -> Self:
-        """
-        Selector of a parameter inside the Chainable object
-
-        Args:
-            property: name of parameter to select from content
-
-        Returns: Chainable
-
-        Raises:
-            AttributeError: if the parameter name does not match in the
-            inner object selected with get
-        """
-        logger.info("Selecting %s", property)
-        self.selector = property
-        self.assertion.selector = property
-
-        objs = self.content
-        # check on base object
-        for obj in objs:
-            value = deep_get(obj, property)
-            if not value:
-                self.assertion.set_failed(obj.id)
-                logger.warning(f"object id: '{obj.id}' has no property '{property}'")
-        return self
-
-    def where(self, selector: str, value: str) -> Self:
-        """
-        Filters the current Speckle objects aquired by mp.get()
-        where the object's own property 'selector' is equal to 'value'
-        Args:
-            selector: The name of a property of a Speckle Object to select
-                e.g: type
-            value: The name of the value of the property to be filtered
-
-        Returns: Chainable
-        """
-        logger.info("Filtering by: %s - %s", selector, value)
-        current = get_current_test_case()
-        if current is None:
-            raise Exception("Expected current test case not to be None")
-        current.selected[selector] = value
-
-        selected = list(
-            filter(lambda obj: property_equal(selector, value, obj), self.content)
-        )
-        logger.info("Elements after filter: %i", len(selected))
-        self.content = selected
-        return self
-
-
 def it(spec_name: str):
     """
     Declares a new Spec and stores it globally in the test cases.
@@ -438,7 +254,8 @@ def get(selector: str, value: str) -> Chainable:
 
     speckle_obj = get_current_obj()
     if not speckle_obj:
-        speckle_obj = get_last_obj()
+        speckle_obj = get_last_obj(get_project_id(), get_model_id())
+        init(speckle_obj)
     if speckle_obj is None:
         raise Exception("Could not get a Base object to query.")
 
@@ -447,10 +264,10 @@ def get(selector: str, value: str) -> Chainable:
     selected = list(filter(lambda obj: property_equal(selector, value, obj), objs))
     logger.info("Got %i %s", len(selected), value)
 
-    return Chainable(selected)
+    return Chainable(selected, current_test)
 
 
-def get_last_obj() -> Base:
+def get_last_obj(project_id: str, model_id: str) -> Base:
     """
     Gets the last object for the specified stream_id
     """
@@ -474,8 +291,8 @@ def get_last_obj() -> Base:
         else:
             logger.warning("No auth present")
 
-    project_id = get_project_id()
-    model_id = get_model_id()
+    # project_id = get_project_id()
+    # model_id = get_model_id()
     transport = ServerTransport(client=client, stream_id=project_id)
 
     models = client.model.get_models(project_id=project_id)
@@ -499,7 +316,7 @@ def get_last_obj() -> Base:
     last_obj = operations.receive(obj_id=last_obj_id, remote_transport=transport)
 
     # cache the current obj
-    init(last_obj)
+    # init(last_obj)
     return last_obj
 
 
@@ -556,18 +373,6 @@ def detect_collision(
             log_collision(logger, c, set_a.content, set_b.content)
 
     return collisions
-
-
-def serialize_set(test_set: Chainable) -> str:
-    """
-    Serializes the seleced objects in a set to a string
-    """
-    response = ""
-    for obj in test_set.content:
-        if isinstance(obj, Base):
-            if "displayValue" in obj.get_member_names():
-                response += f"{obj.id}\t{operations.serialize(obj)}\n"
-    return response
 
 
 def print_info(specs):
