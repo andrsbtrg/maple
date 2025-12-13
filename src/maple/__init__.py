@@ -38,6 +38,13 @@ _project_id: str = ""
 _model_id: str = ""
 
 
+DEPR_REASON = """
+Global mp functions are being deprecated and will be removed in the next version of maple.
+Please use maple.base.Maple class and see migration.
+"""
+
+
+@deprecated(DEPR_REASON)
 def init(obj: Base) -> None:
     """
     Caches the speckle object obj in the global _current_object
@@ -83,6 +90,7 @@ def stream(id: str) -> None:
     return
 
 
+@deprecated(DEPR_REASON)
 def init_model(project_id: str, model_id: str) -> None:
     """
     Sets the global variables project id and model id for the
@@ -118,6 +126,7 @@ def get_token() -> str | None:
     return token
 
 
+@deprecated(DEPR_REASON)
 def get_model_id() -> str:
     """
     Gets the Model id provided with mp.init_model
@@ -128,6 +137,7 @@ def get_model_id() -> str:
     return _model_id
 
 
+@deprecated(DEPR_REASON)
 def get_project_id() -> str:
     """
     Gets the Model id provided with mp.init_model
@@ -138,6 +148,7 @@ def get_project_id() -> str:
     return _project_id
 
 
+@deprecated(DEPR_REASON)
 def get_current_obj() -> Base | None:
     """
     Get the current object specified with mp.init()
@@ -146,6 +157,7 @@ def get_current_obj() -> Base | None:
     return _current_object
 
 
+@deprecated(DEPR_REASON)
 def get_current_test_case() -> Result | None:
     """
     Get the current test case
@@ -157,6 +169,7 @@ def get_current_test_case() -> Result | None:
     return current
 
 
+@deprecated(DEPR_REASON)
 def get_test_cases() -> list[Result]:
     """
     Gets the list of Test Cases
@@ -165,6 +178,7 @@ def get_test_cases() -> list[Result]:
     return _test_cases
 
 
+@deprecated(DEPR_REASON)
 def get_results() -> list[Any]:
     """
     Gets the list of Results
@@ -215,6 +229,7 @@ def get_results() -> list[Any]:
 # endof GLOBALS
 
 
+@deprecated(DEPR_REASON)
 def it(spec_name: str):
     """
     Declares a new Spec and stores it globally in the test cases.
@@ -229,6 +244,7 @@ def it(spec_name: str):
     get_test_cases().append(Result(spec_name))
 
 
+@deprecated(DEPR_REASON)
 def get(selector: str, value: str) -> Chainable:
     """
     Does a speckle queries and then filters by 'selector'.
@@ -267,6 +283,7 @@ def get(selector: str, value: str) -> Chainable:
     return Chainable(selected, current_test)
 
 
+@deprecated(DEPR_REASON)
 def get_last_obj(project_id: str, model_id: str) -> Base:
     """
     Gets the last object for the specified stream_id
@@ -320,6 +337,7 @@ def get_last_obj(project_id: str, model_id: str) -> Base:
     return last_obj
 
 
+@deprecated(DEPR_REASON)
 def run(*specs: Callable):
     """
     Runs any number of spec functions passed by args
@@ -340,6 +358,7 @@ def run(*specs: Callable):
     print_results(get_test_cases())
 
 
+@deprecated(DEPR_REASON)
 def detect_collision(
     set_a: Chainable, set_b: Chainable, min_dist=0.0
 ) -> List[Collision]:
