@@ -28,7 +28,10 @@ Then, create your `main.py` to test your specs locally
 
 ```py
 # main.py
-import maple as mp
+from maple.base import Maple
+
+# Use the project and model id of one of your projects
+mp=Maple(project_id="24fa0ed1c3", model_id="2696b4a381")
 
 def spec_a():
     mp.it("checks window height is greater than 2600 mm")
@@ -39,8 +42,6 @@ def spec_a():
         .its('Height')\
         .should('be.greater', 2600)
 
-# Use the project and model id of one of your projects
-mp.init_model(project_id="24fa0ed1c3", model_id="2696b4a381")
 mp.run(spec_a)
 ```
 For this to work out of the box, you should have the [Speckle Manager](https://speckle.systems/download/)
