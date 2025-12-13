@@ -1,6 +1,6 @@
-import maple as mp
 from dotenv import load_dotenv
 
+from maple.base.maple import Maple
 from maple.ops import CompOp
 
 load_dotenv()
@@ -11,8 +11,17 @@ spec_name = f"checks window height is greater than {min_height} mm"
 
 def test_results():
     stream_id = "21f8910cc7"
-    mp.init_model(project_id=stream_id, model_id="f4a1103c37")
+    mp = Maple(project_id=stream_id, model_id="f4a1103c37")
+
+    def spec():
+        mp.it(spec_name)
+
+        mp.get("category", "Windows").where(
+            "speckle_type", "Objects.Other.Instance:Objects.Other.Revit.RevitInstance"
+        ).its("Height").should("be.greater", min_height)
+
     mp.run(spec)
+
     results = mp.get_results()
     assert len(results) == 1
     result = results[0]
@@ -25,11 +34,3 @@ def test_results():
     assert result["spec"]["comparer"] == CompOp.BE_GREATER
     assert result["spec"]["value"] == min_height
     assert result["result"] == "pass"
-
-
-def spec():
-    mp.it(spec_name)
-
-    mp.get("category", "Windows").where(
-        "speckle_type", "Objects.Other.Instance:Objects.Other.Revit.RevitInstance"
-    ).its("Height").should("be.greater", min_height)
