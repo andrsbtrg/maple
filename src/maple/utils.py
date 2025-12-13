@@ -2,7 +2,10 @@ import logging
 from acers import Collision
 from specklepy.objects import Base
 from .models import Result
+from .base.chainable import Chainable
 from typing import Tuple, List
+
+from specklepy.api import operations
 
 import os
 
@@ -73,3 +76,26 @@ def log_collision(
     #     element_2 = next(base for base in set_b if base.id == c[1])
 
     logger.info(f"Clash between {c.ids[0]} and {c.ids[1]}")
+
+
+def serialize_set(test_set: Chainable) -> str:
+    """
+    Serializes the seleced objects in a set to a string
+    """
+    response = ""
+    for obj in test_set.content:
+        if isinstance(obj, Base):
+            if "displayValue" in obj.get_member_names():
+                response += f"{obj.id}\t{operations.serialize(obj)}\n"
+    return response
+
+
+def print_info(specs):
+    from importlib_metadata import version
+
+    print_title("Test session")
+
+    v = version("maple-spec")
+    print("Maple -", v)
+    print("collected", len(specs), "specs")
+    print()
